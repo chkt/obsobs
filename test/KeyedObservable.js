@@ -1,7 +1,7 @@
 import _assert from 'assert';
 
-import Observable from '../source/KeyedObservable';
-import {
+import * as _notify from '../source/Notifier.js';
+import Observable, {
 	ADD_PROPS,
 	REMOVE_PROPS,
 	OBSERVE,
@@ -117,31 +117,75 @@ describe('KeyedObservable', () => {
 			_assert.strictEqual(ins[OBSERVE]('a', fna), ins);
 		});
 
-		it("should observe changes to atomic properties", done => {
-			const ins = new Observable({ a : "1" });
-
-			ins[OBSERVE]('a', (name, now, was) => {
-				if (name === 'a' && now === 1 && was === "1") done();
-				else done(new Error());
-			});
-
-			ins.a = 1;
-		});
-
 		it("should observe property creation", done => {
 			const ins = new Observable();
 
-			ins[OBSERVE]('a', (name, now, was) => {
-				if (name === 'a' && now === 1 && was === undefined) done();
+			ins[OBSERVE]('a', (now, was, meta) => {
+				if (
+					now === 1 &&
+					was === undefined &&
+					meta.property === 'a' &&
+					meta.type === _notify.TYPE_ADD &&
+					meta.origin === ins
+				) done();
 				else done(new Error());
 			});
 
 			ins[ADD_PROPS]({ a : 1 });
 		});
 
-		it("should observe property destruction");
+		it("should observe property creation during construction", done => {
+			const ins = new Observable({ a : 1 });
 
-		it("should observe changes to keyed child objects");
+			ins[OBSERVE]('a', (now, was, meta) => {
+				if (
+					now === 1 &&
+					was === undefined &&
+					meta.property === 'a' &&
+					meta.type === _notify.TYPE_ADD &&
+					meta.origin === ins
+				) done();
+				else done(new Error());
+			});
+		});
+
+		it("should observe changes to atomic properties", done => {
+			const ins = new Observable({ a : "1" });
+
+			ins[OBSERVE]('a', (now, was, meta) => {
+				if (meta.type === _notify.TYPE_ADD) return;
+				else if (
+					now === 1 &&
+					was === "1" &&
+					meta.property === 'a' &&
+					meta.type === _notify.TYPE_UPDATE &&
+					meta.origin === ins
+				) done();
+				else done(new Error());
+			});
+
+			ins.a = 1;
+		});
+
+		it("should observe changes to keyed child objects", done => {
+			const ins = new Observable({ a : { b : 1 }});
+
+			ins[OBSERVE]('a', (now, was, meta) => {
+				if (meta.type === _notify.TYPE_ADD) return;
+				else if (
+					now === 2 &&
+					was === 1 &&
+					meta.property === 'b' &&
+					meta.type === _notify.TYPE_UPDATE &&
+					meta.origin === ins.a
+				) done();
+				else done(new Error());
+			});
+
+			ins.a.b = 2;
+		});
+
+		it("should observe property destruction");
 
 		it("should observe changes to indexed child objects");
 
@@ -149,8 +193,16 @@ describe('KeyedObservable', () => {
 			const ins =  new Observable({ a : 1 });
 			let sync = true;
 
-			ins[OBSERVE]('a', (name, now, was) => {
-				if (name === 'a' && now === 2 && was === 1 && !sync) done();
+			ins[OBSERVE]('a', (now, was, meta) => {
+				if (meta.type === _notify.TYPE_ADD) return;
+				else if (
+					now === 2 &&
+					was === 1 &&
+					meta.property === 'a' &&
+					meta.type === _notify.TYPE_UPDATE &&
+					meta.origin === ins &&
+					!sync
+				) done();
 				else done(new Error());
 			});
 
@@ -180,31 +232,75 @@ describe('KeyedObservable', () => {
 			_assert.strictEqual(ins[OBSERVE_ANY](fna), ins);
 		});
 
-		it("should observe changes to atomic properties", done => {
-			const ins = new Observable({ a : "1" });
-
-			ins[OBSERVE_ANY]((name, now, was) => {
-				if (name === 'a' && now === 1 && was === "1") done();
-				else done(new Error());
-			});
-
-			ins.a = 1;
-		});
-
 		it("should observe property creation", done => {
 			const ins = new Observable();
 
-			ins[OBSERVE_ANY]((name, now, was) => {
-				if (name === 'a' && now === 1 && was === undefined) done();
+			ins[OBSERVE_ANY]((now, was, meta) => {
+				if (
+					now === 1 &&
+					was === undefined &&
+					meta.property === 'a' &&
+					meta.type === _notify.TYPE_ADD &&
+					meta.origin === ins
+				) done();
 				else done(new Error());
 			});
 
 			ins[ADD_PROPS]({ a : 1 });
 		});
 
-		it("should observe property destruction");
+		it("should observe property creation during construction", done => {
+			const ins = new Observable({ a : 1 });
 
-		it("should observe changes to keyed child objects");
+			ins[OBSERVE_ANY]((now, was, meta) => {
+				if (
+					now === 1 &&
+					was === undefined &&
+					meta.property === 'a' &&
+					meta.type === _notify.TYPE_ADD &&
+					meta.origin === ins
+				) done();
+				else done(new Error());
+			});
+		});
+
+		it("should observe changes to atomic properties", done => {
+			const ins = new Observable({ a : "1" });
+
+			ins[OBSERVE_ANY]((now, was, meta) => {
+				if (meta.type === _notify.TYPE_ADD) return;
+				else if (
+					now === 1 &&
+					was === "1" &&
+					meta.property === 'a' &&
+					meta.type === _notify.TYPE_UPDATE &&
+					meta.origin === ins
+				) done();
+				else done(new Error());
+			});
+
+			ins.a = 1;
+		});
+
+		it("should observe changes to keyed child objects", done => {
+			const ins = new Observable({ a : { b : 1 }});
+
+			ins[OBSERVE_ANY]((now, was, meta) => {
+				if (meta.type === _notify.TYPE_ADD) return;
+				else if (
+					now === 2 &&
+					was === 1 &&
+					meta.property === 'b' &&
+					meta.type === _notify.TYPE_UPDATE &&
+					meta.origin === ins.a
+				) done();
+				else done(new Error());
+			});
+
+			ins.a.b = 2;
+		});
+
+		it("should observe property destruction");
 
 		it("should observe changes to indexed child objects");
 
@@ -212,8 +308,16 @@ describe('KeyedObservable', () => {
 			const ins = new Observable({ a : 1 });
 			let sync = true;
 
-			ins[OBSERVE_ANY]((name, now, was) => {
-				if (name === 'a' && now === 2 && was === 1 && !sync) done();
+			ins[OBSERVE_ANY]((now, was, meta) => {
+				if (meta.type === _notify.TYPE_ADD) return;
+				else if (
+					now === 2 &&
+					was === 1 &&
+					meta.property === 'a' &&
+					meta.type === _notify.TYPE_UPDATE &&
+					meta.origin === ins &&
+					!sync
+				) done();
 				else done(new Error());
 			});
 
@@ -288,7 +392,7 @@ describe('KeyedObservable', () => {
 			const model = {
 				a : 1,
 				b : 2,
-				c : 3,
+				c : 3
 			};
 
 			const ins = new Observable(model);
