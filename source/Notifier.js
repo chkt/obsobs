@@ -1,8 +1,9 @@
+export const TYPE_MOVE = 0b000;
 export const TYPE_ADD = 0b001;
 export const TYPE_REMOVE = 0b010;
 export const TYPE_UPDATE =  0b011;
 
-export const FLAG_CASCADE = 0b111;
+export const FLAG_CASCADE = 0b100;
 
 
 const _TYPES = Object.freeze([
