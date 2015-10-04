@@ -1,4 +1,5 @@
 import Notifier, * as _notify from './Notifier';
+import Queue from './ConditionalQueue';
 
 
 
@@ -47,7 +48,7 @@ function _createProperty(prop, val) {
 	const factory = _factory.get(type);
 	const notify = _notifier.get(this);
 
-	const ret = factory.call(this, prop, val);
+	const ret = factory.process(this, prop, val);
 
 	if (ret instanceof BaseObservable) {
 		_notifier.get(ret).setCascadeParent(notify, prop);
@@ -158,13 +159,12 @@ export function moveProperties(source) {
 
 
 export default class BaseObservable {
-	static configure(type, factory) {
-		if (
-			typeof type !== 'symbol' ||
-			typeof factory !== 'function'
-		) throw new TypeError();
+	static configure(type, ...factory) {
+		if (typeof type !== 'symbol') throw new TypeError();
 
-		_factory.set(type, factory);
+		if (!_factory.has(type)) _factory.set(type, new Queue());
+
+		_factory.get(type).append(...factory);
 
 		return this;
 	}
