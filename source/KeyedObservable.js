@@ -1,6 +1,12 @@
 import Observable, * as _observe from './BaseObservable';
 
 
+Observable.configure(
+	_observe.DEFAULT_TYPE,
+	(prop, val) => typeof val === 'object' && val !== null ? new KeyedObservable(val) : val
+);
+
+
 
 const _notifier = new WeakMap();
 
@@ -81,7 +87,3 @@ export default class KeyedObservable extends Observable {
 		return this;
 	}
 }
-
-
-
-Observable.configure(_observe.DEFAULT_TYPE, (prop, val) => typeof val === 'object' && val !== null ? new KeyedObservable(val) : val);
