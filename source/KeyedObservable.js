@@ -3,7 +3,7 @@ import Observable, * as _observe from './BaseObservable';
 
 Observable.configure(
 	_observe.DEFAULT_TYPE,
-	(prop, val) => typeof val === 'object' && val !== null ? new KeyedObservable(val) : val
+	(prop, val) => typeof val === 'object' && val !== null ? new KeyedObservable(val) : undefined
 );
 
 
