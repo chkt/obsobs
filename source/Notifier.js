@@ -77,7 +77,7 @@ function _notify(source, property, type, now, was) {
 		origin : _origin.get(source),
 		property,
 		type,
-		path : [property]
+		path : []
 	});
 
 	for (
