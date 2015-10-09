@@ -91,8 +91,57 @@ describe('KeyedObservable', () => {
 			_assert.strictEqual(ins.a.b, 2);
 			_assert.strictEqual(ins.a.c, 3);
 		});
+	});
 
-		it("should add indexed child objects");
+	describe('#[REMOVE_PROPS]', () => {
+		it("should expect an object", () => {
+			const ins = new Observable();
+
+			_assert.throws(() => ins[REMOVE_PROPS](), TypeError);
+			_assert.throws(() => ins[REMOVE_PROPS]("1"), TypeError);
+			_assert.throws(() => ins[REMOVE_PROPS](1), TypeError);
+			_assert.throws(() => ins[REMOVE_PROPS](true), TypeError);
+			_assert.throws(() => ins[REMOVE_PROPS](() => {}), TypeError);
+			_assert.doesNotThrow(() => ins[REMOVE_PROPS]({}));
+		});
+
+		it("should be chainable", () => {
+			const ins = new Observable();
+
+			_assert.strictEqual(ins[REMOVE_PROPS]({}), ins);
+		});
+
+		it("should remove scalar properties", () => {
+			const ins = new Observable({
+				a : 1,
+				b : 2,
+				c : 3
+			});
+
+			ins[REMOVE_PROPS]({
+				a : 1,
+				b : 2,
+				c : 3
+			});
+
+			_assert(!('a' in ins));
+			_assert(!('b' in ins));
+			_assert(!('c' in ins));
+		});
+
+		it("should remove keyed child properties", () => {
+			const ins = new Observable({
+				a : {
+					a : 1,
+					b : 2,
+					c : 3
+				}
+			});
+
+			ins[REMOVE_PROPS]({ a : 1 });
+
+			_assert(!('a' in ins));
+		});
 	});
 
 	describe('#[OBSERVE]', () => {
@@ -185,9 +234,23 @@ describe('KeyedObservable', () => {
 			ins.a.b = 2;
 		});
 
-		it("should observe property destruction");
+		it("should observe property destruction", done => {
+			const ins = new Observable({ a : 1});
 
-		it("should observe changes to indexed child objects");
+			ins[OBSERVE]('a', (now, was, meta) => {
+				if (meta.type === _notify.TYPE_ADD) return;
+				else if (
+					now === undefined &&
+					was === 1 &&
+					meta.property === 'a' &&
+					meta.type === _notify.TYPE_REMOVE &&
+					meta.origin === ins
+				) done();
+				else done(new Error());
+			});
+
+			ins[REMOVE_PROPS]({ a : 1 });
+		});
 
 		it("should operate asynchronously", done => {
 			const ins =  new Observable({ a : 1 });
@@ -300,9 +363,23 @@ describe('KeyedObservable', () => {
 			ins.a.b = 2;
 		});
 
-		it("should observe property destruction");
+		it("should observe property destruction", done => {
+			const ins = new Observable({ a : 1 });
 
-		it("should observe changes to indexed child objects");
+			ins[OBSERVE_ANY]((now, was, meta) => {
+				if (meta.type === _notify.TYPE_ADD) return;
+				else if (
+					now === undefined &&
+					was === 1 &&
+					meta.property === 'a' &&
+					meta.type === _notify.TYPE_REMOVE &&
+					meta.origin === ins
+				) done();
+				else done(new Error());
+			});
+
+			ins[REMOVE_PROPS]({ a : 1});
+		});
 
 		it("should operate asynchronously", done => {
 			const ins = new Observable({ a : 1 });
