@@ -84,10 +84,6 @@ function _removeProperty(prop, val) {
 }
 
 
-function* _iterate(vals) {
-	for (let prop in vals) yield [prop, vals[prop]];
-}
-
 
 export function getNotifier() {
 	const notify = _notifier.get(this);
@@ -138,7 +134,9 @@ export function moveProperties(source) {
 	if (vals === undefined) throw new TypeError(_ERRNOINS);
 
 	for (let [origin, dest] of _iterator.get(this)(source)) {
-		if (this[origin] === _CHILD) {
+		if (!(origin in vals) || dest in vals) throw new Error(_ERRPROP);
+
+		if (vals[origin] === _CHILD) {
 			spec[dest] = Object.getOwnPropertyDescriptor(this, origin);
 			vals[dest] = _CHILD;
 
@@ -146,8 +144,8 @@ export function moveProperties(source) {
 			delete vals[origin];
 		}
 		else {
-			_createProperty(dest, vals[origin]);
-			_removeProperty(origin);
+			spec[dest] = _createProperty.call(this, dest, vals[origin]);
+			_removeProperty.call(this, origin);
 		}
 
 		notify.queue(origin, _notify.TYPE_MOVE, dest, origin);
@@ -183,8 +181,10 @@ export default class BaseObservable {
 	}
 
 
-	[Symbol.iterator]() {
-		return _iterate.call(this, _value.get(this));
+	*[Symbol.iterator]() {
+		const vals = _value.get(this);
+
+		for (let prop in vals) yield [prop, vals[prop]];
 	}
 
 
