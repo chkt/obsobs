@@ -7,6 +7,7 @@ export const FLAG_CASCADE = 0b100;
 
 
 const _TYPES = Object.freeze([
+	TYPE_MOVE,
 	TYPE_ADD,
 	TYPE_REMOVE,
 	TYPE_UPDATE
