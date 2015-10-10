@@ -12,7 +12,7 @@ const _notifier = new WeakMap();
 
 
 
-function* iterate(source) {
+function* _iterate(source) {
 	if (typeof source !== 'object' || source === null) throw new TypeError();
 
 	for (let prop in source) {
@@ -37,7 +37,7 @@ export const RELEASE_ALL = Symbol();
 
 export default class KeyedObservable extends Observable {
 	constructor(source = {}, type = _observe.DEFAULT_TYPE) {
-		super(iterate, type);
+		super(_iterate, type);
 
 		_notifier.set(this, _observe.getNotifier.call(this));
 
