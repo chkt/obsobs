@@ -1,0 +1,45 @@
+{
+	"name": "obsobs",
+	"description" : "Nested Oberservables",
+	"version": "0.0.1",
+	"license" : "MIT",
+
+	"author" : {
+		"name" : "Christoph Kettelhoit",
+		"email" : "ck@christoph-kettelhoit.de",
+		"url" : "christoph-kettelhoit.de"
+	},
+
+	"repository" : {
+		"type" : "git",
+		"url" : "https://github.com/chkt/obsobs"
+	},
+
+	"scripts" : {
+		"gulp" : "gulp",
+		"test" : "gulp test"
+	},
+
+	"files" : [
+		"dist/ConditionalQueue.js",
+		"dist/Notifier.js",
+		"dist/BaseObservable.js",
+		"dist/KeyedObservable.js",
+		"dist/IndexedObservable.js"
+	],
+
+	"devDependencies" : {
+		"del": "~2.0",
+		"babel" : "~5.8",
+		"jscs" : "~2.1",
+		"gulp" : "~3.9",
+		"gulp-jshint" : "~1.11",
+		"gulp-jscs" : "~2.0",
+		"gulp-mocha" : "~2.1",
+		"gulp-babel" : "~5.2"
+	},
+
+	"dependencies" : {
+		"qee" : "~0.1"
+	}
+}
