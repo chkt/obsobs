@@ -9,20 +9,22 @@ export const DEFAULT_TYPE = Symbol('observable');
 const _ERRNOINS = "not an instance";
 const _ERRPROP = "invalid property manipulation";
 
-const _CHILD = Symbol('child');
-
 
 const _factory = new Map();
 
 const _type = new WeakMap();
 const _iterator = new WeakMap();
+
 const _value = new WeakMap();
+const _child = new WeakMap();
 const _notifier = new WeakMap();
 
 
 
 function _createGetter(prop) {
-	return () => _value.get(this)[prop];
+	const child = _child.get(this), vals = _value.get(this);
+
+	return () => prop in child ? child[prop] : vals[prop];
 }
 
 function _createSetter(prop) {
@@ -34,7 +36,8 @@ function _createSetter(prop) {
 
 		if (was === now) return;
 
-		vals[prop] = now;
+		_removeProperty.call(this, prop, null);
+		_createProperty.call(this, prop, now);
 
 		notify.queue(prop, _notify.TYPE_UPDATE, now, was);
 	};
@@ -48,35 +51,30 @@ function _createProperty(prop, val) {
 	const factory = _factory.get(type);
 	const notify = _notifier.get(this);
 
-	const ret = factory.process(this, prop, val);
+	const ins = factory.process(this, prop, val);
 
-	if (ret instanceof BaseObservable) {
-		_notifier.get(ret).setCascadeParent(notify, prop);
-		_value.get(this)[prop] = _CHILD;
-
-		return {
-			value : ret,
-			configurable : true,
-			enumerable : true
-		};
+	if (ins instanceof BaseObservable) {
+		_child.get(this)[prop] = ins;
+		_notifier.get(ins).setCascadeParent(notify, prop);
 	}
-	else {
-		_value.get(this)[prop] = val;
 
-		return {
-			get : _createGetter.call(this, prop),
-			set : _createSetter.call(this, prop),
-			configurable : true,
-			enumerable : true
-		};
-	}
+	_value.get(this)[prop] = val;
+
+	return {
+		get : _createGetter.call(this, prop),
+		set : _createSetter.call(this, prop),
+		configurable : true,
+		enumerable : true
+	};
 }
 
 function _removeProperty(prop, val) {
-	if (this[prop] instanceof BaseObservable && typeof val === 'object' && val !== null) {
-		removeProperties.call(this[prop], val);
+	const child = _child.get(this);
 
-		return;
+	if (prop in child) {
+		_notifier.get(child[prop]).resetCascadeParent();
+
+		delete child[prop];
 	}
 
 	delete _value.get(this)[prop];
@@ -129,24 +127,17 @@ export function removeProperties(source) {
 
 export function moveProperties(source) {
 	const spec = {};
-	const vals = _value.get(this), notify = _notifier.get(this);
+	const vals = _value.get(this);
 
 	if (vals === undefined) throw new TypeError(_ERRNOINS);
+
+	const child = _child.get(this), notify = _notifier.get(this);
 
 	for (let [origin, dest] of _iterator.get(this)(source)) {
 		if (!(origin in vals) || dest in vals) throw new Error(_ERRPROP);
 
-		if (vals[origin] === _CHILD) {
-			spec[dest] = Object.getOwnPropertyDescriptor(this, origin);
-			vals[dest] = _CHILD;
-
-			delete this[origin];
-			delete vals[origin];
-		}
-		else {
-			spec[dest] = _createProperty.call(this, dest, vals[origin]);
-			_removeProperty.call(this, origin);
-		}
+		spec[dest] = _createProperty.call(this, dest, vals[origin]);
+		_removeProperty.call(this, origin, null);
 
 		notify.queue(origin, _notify.TYPE_MOVE, dest, origin);
 	}
@@ -176,7 +167,9 @@ export default class BaseObservable {
 
 		_type.set(this, type);
 		_iterator.set(this, iterate);
+
 		_value.set(this, {});
+		_child.set(this, {});
 		_notifier.set(this, new Notifier(this));
 	}
 
@@ -189,9 +182,11 @@ export default class BaseObservable {
 
 
 	toJSON() {
-		const vals = _value.get(this), res = {};
+		const child  = _child.get(this);
+		const vals = _value.get(this)
+		const res = {};
 
-		for (let prop in vals) res[prop] = vals[prop] === _CHILD ? this[prop].toJSON() : vals[prop];
+		for (let prop in vals) res[prop] = prop in child ? child[prop].toJSON() : vals[prop];
 
 		return res;
 	}
