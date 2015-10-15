@@ -1,9 +1,12 @@
+import * as _ops from 'obsops';
+
 import Notifier, * as _notify from './Notifier';
 import Queue from './ConditionalQueue';
 
 
 
 export const DEFAULT_TYPE = Symbol('observable');
+export const SET_PROPERTIES = Symbol('setProperties');
 
 
 const _ERRNOINS = "not an instance";
@@ -37,7 +40,8 @@ function _createSetter(prop) {
 		if (was === now) return;
 
 		_removeProperty.call(this, prop, null);
-		_createProperty.call(this, prop, now);
+
+		Object.defineProperty(this, prop, _createProperty.call(this, prop, now));
 
 		notify.queue(prop, _notify.TYPE_UPDATE, now, was);
 	};
@@ -70,6 +74,15 @@ function _createProperty(prop, val) {
 
 function _removeProperty(prop, val) {
 	const child = _child.get(this);
+
+	if (typeof val === 'object' && val !== null && prop in child) {
+		try {
+			child[prop][SET_PROPERTIES](val);
+
+			return;
+		}
+		catch(err) {}
+	}
 
 	if (prop in child) {
 		_notifier.get(child[prop]).resetCascadeParent();
@@ -104,6 +117,40 @@ export function createProperties(source) {
 		spec[prop] = _createProperty.call(this, prop, val);
 
 		notify.queue(prop, _notify.TYPE_ADD, val, undefined);
+	}
+
+	Object.defineProperties(this, spec);
+}
+
+export function updateProperties(source) {
+	const spec = {};
+	const vals = _value.get(this);
+	const child = _child.get(this);
+	const notify = _notifier.get(this);
+
+	if (vals === undefined) throw new TypeError(_ERRNOINS);
+
+	for (let [prop, val] of _iterator.get(this)(source)) {
+		if (!(prop in vals)) throw new Error(_ERRPROP);
+
+		if (typeof val === 'object' && val !== null && prop in child) {
+			try {
+				child[prop][SET_PROPERTIES](val);
+
+				continue;
+			}
+			catch(err) {}
+		}
+
+		const was = vals[prop];
+
+		if (val === was) continue;
+
+		_removeProperty.call(this, prop, null);
+
+		spec[prop] = _createProperty.call(this, prop, val);
+
+		notify.queue(prop, _notify.TYPE_UPDATE, val, was);
 	}
 
 	Object.defineProperties(this, spec);
@@ -159,7 +206,7 @@ export default class BaseObservable {
 	}
 
 
-	constructor(iterate, type) {
+	constructor(iterate, type = DEFAULT_TYPE) {
 		if (
 			//IMPLEMENT validate generator
 			typeof type !== 'symbol'
@@ -171,6 +218,25 @@ export default class BaseObservable {
 		_value.set(this, {});
 		_child.set(this, {});
 		_notifier.set(this, new Notifier(this));
+	}
+
+
+	[SET_PROPERTIES](now) {
+		if (typeof now !== 'object' || now === null) throw new TypeError();
+
+		const was = _value.get(this);
+
+		if (was === undefined) throw new Error(_ERRNOINS);
+
+		const add = _ops.difference(now, was);
+		const remove = _ops.difference(was, now);
+		const update = _ops.intersection(now, was);
+
+		removeProperties.call(this, remove);
+		updateProperties.call(this, update);
+		createProperties.call(this, add);
+
+		return this;
 	}
 
 
