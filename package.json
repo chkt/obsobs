@@ -40,6 +40,7 @@
 	},
 
 	"dependencies" : {
-		"qee" : "~0.1"
+		"qee" : "~0.1",
+		"obsops" : "~0.1"
 	}
 }
