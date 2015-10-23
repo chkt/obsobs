@@ -63,7 +63,7 @@ describe("ConditionalQueue", () => {
 			_assert.strictEqual(ins.process(obs, 'foo', 0), 1);
 		});
 
-		it("should return the value if no function does not return undefined", () => {
+		it("should return null if no function does not return undefined", () => {
 			function fna() {}
 			function fnb() {}
 			function fnc() {}
@@ -71,7 +71,7 @@ describe("ConditionalQueue", () => {
 			const obs = new Observable(function* (){}(), _observe.DEFAULT_TYPE);
 			const ins = new Queue(fna, fnb, fnc);
 
-			_assert.strictEqual(ins.process(obs, 'foo', 0), 0);
+			_assert.strictEqual(ins.process(obs, 'foo', 0), null);
 		});
 	});
 });
