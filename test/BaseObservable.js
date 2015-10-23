@@ -17,16 +17,14 @@ const _genObj = function* (source) {
 
 const _factType = Symbol();
 
-const _factObs = function(prop, val) {
-	let target;
-
+const _factObs = function(prop, val, target) {
 	if (typeof val === 'object' && val !== null) {
-		target = new Observable(_genObj, _factType);
+		if (!(target instanceof Observable)) target = new Observable(_genObj, _factType);
 
 		target[_observe.SET_PROPERTIES](val);
-	}
 
-	return target;
+		return target;
+	}
 };
 
 
@@ -280,8 +278,6 @@ describe('BaseObservable', () => {
 		it("should mutate properties from scalar to nested", () => {
 			Observable.configure(_factType, _factObs);
 
-			console.log('scalar > nested');
-
 			const ins = new Observable(_genObj, _factType);
 			const set = _observe.SET_PROPERTIES;
 
@@ -294,8 +290,6 @@ describe('BaseObservable', () => {
 
 		it("should mutate properties from nested to scalar", () => {
 			Observable.configure(_factType, _factObs);
-
-			console.log('nested > scalar');
 
 			const ins = new Observable(_genObj, _factType);
 			const set = _observe.SET_PROPERTIES;
