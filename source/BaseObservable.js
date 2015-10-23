@@ -39,7 +39,7 @@ function _createSetter(prop) {
 
 		if (was === now) return;
 
-		_removeProperty.call(this, prop, null);
+		_removeProperty.call(this, prop);
 
 		Object.defineProperty(this, prop, _createProperty.call(this, prop, now));
 
@@ -47,22 +47,26 @@ function _createSetter(prop) {
 	};
 }
 
+
 function _createProperty(prop, val) {
 	const type = _type.get(this);
-
-	if (type === undefined) throw new Error(_ERRNOINS);
-
 	const factory = _factory.get(type);
 	const notify = _notifier.get(this);
 
-	const ins = factory.process(this, prop, val);
+	if (type === undefined) throw new Error(_ERRNOINS);
+
+	const vals = _value.get(this);
+
+	if (prop in vals) throw new Error(_ERRPROP);
+
+	const ins = factory.process(this, prop, val, undefined);
 
 	if (ins instanceof BaseObservable) {
 		_child.get(this)[prop] = ins;
 		_notifier.get(ins).setCascadeParent(notify, prop);
 	}
 
-	_value.get(this)[prop] = val;
+	vals[prop] = val;
 
 	return {
 		get : _createGetter.call(this, prop),
@@ -72,17 +76,11 @@ function _createProperty(prop, val) {
 	};
 }
 
-function _removeProperty(prop, val) {
+function _removeProperty(prop) {
+	const vals = _value.get(this);
 	const child = _child.get(this);
 
-	if (typeof val === 'object' && val !== null && prop in child) {
-		try {
-			child[prop][SET_PROPERTIES](val);
-
-			return;
-		}
-		catch(err) {}
-	}
+	if (!(prop in vals)) throw new Error(_ERRPROP);
 
 	if (prop in child) {
 		_notifier.get(child[prop]).resetCascadeParent();
@@ -90,8 +88,39 @@ function _removeProperty(prop, val) {
 		delete child[prop];
 	}
 
-	delete _value.get(this)[prop];
+	delete vals[prop];
 	delete this[prop];
+}
+
+function _updateProperty(prop, val) {
+	const type = _type.get(this);
+	const factory = _factory.get(type);
+	const notify = _notifier.get(this);
+
+	if (type === undefined) throw new Error(_ERRNOINS);
+
+	const vals = _value.get(this);
+	const child = _child.get(this);
+
+	if (!(prop in vals)) throw new Error(_ERRPROP);
+
+	const wasIns = prop in child ? child[prop] : undefined;
+	const nowIns = factory.process(this, prop, val, wasIns);
+
+	vals[prop] = val;
+
+	if (nowIns !== undefined && wasIns === nowIns) return;
+
+	if (wasIns instanceof BaseObservable) {
+		_notifier.get(wasIns).resetCascadeParent();
+
+		delete child[prop];
+	}
+
+	if (nowIns instanceof BaseObservable) {
+		child[prop] = nowIns;
+		_notifier.get(nowIns).setCascadeParent(notify, prop);
+	}
 }
 
 
@@ -107,13 +136,9 @@ export function getNotifier() {
 
 export function createProperties(source) {
 	const spec = {};
-	const vals = _value.get(this), notify = _notifier.get(this);
-
-	if (vals === undefined) throw new TypeError(_ERRNOINS);
+	const notify = _notifier.get(this);
 
 	for (let [prop, val] of _iterator.get(this)(source)) {
-		if (prop in vals) throw new Error(_ERRPROP);
-
 		spec[prop] = _createProperty.call(this, prop, val);
 
 		notify.queue(prop, _notify.TYPE_ADD, val, undefined);
@@ -123,7 +148,6 @@ export function createProperties(source) {
 }
 
 export function updateProperties(source) {
-	const spec = {};
 	const vals = _value.get(this);
 	const child = _child.get(this);
 	const notify = _notifier.get(this);
@@ -131,29 +155,15 @@ export function updateProperties(source) {
 	if (vals === undefined) throw new TypeError(_ERRNOINS);
 
 	for (let [prop, val] of _iterator.get(this)(source)) {
-		if (!(prop in vals)) throw new Error(_ERRPROP);
-
-		if (typeof val === 'object' && val !== null && prop in child) {
-			try {
-				child[prop][SET_PROPERTIES](val);
-
-				continue;
-			}
-			catch(err) {}
-		}
-
 		const was = vals[prop];
+		const wasIns = child[prop];
 
-		if (val === was) continue;
+		_updateProperty.call(this, prop, val);
 
-		_removeProperty.call(this, prop, null);
+		const nowIns = child[prop];
 
-		spec[prop] = _createProperty.call(this, prop, val);
-
-		notify.queue(prop, _notify.TYPE_UPDATE, val, was);
+		if (nowIns === undefined || nowIns !== wasIns) notify.queue(prop, _notify.TYPE_UPDATE, val, was);
 	}
-
-	Object.defineProperties(this, spec);
 }
 
 export function removeProperties(source) {
@@ -162,13 +172,11 @@ export function removeProperties(source) {
 	if (vals === undefined) throw new TypeError(_ERRNOINS);
 
 	for (let [prop, val] of _iterator.get(this)(source)) {
-		if (!(prop in vals)) throw new Error(_ERRPROP);
-
 		const was = vals[prop];
 
-		_removeProperty.call(this, prop, val);
+		_removeProperty.call(this, prop);
 
-		if (!(prop in this)) notify.queue(prop, _notify.TYPE_REMOVE, undefined, was);
+		notify.queue(prop, _notify.TYPE_REMOVE, undefined, was);
 	}
 }
 
@@ -184,7 +192,7 @@ export function moveProperties(source) {
 		if (!(origin in vals) || dest in vals) throw new Error(_ERRPROP);
 
 		spec[dest] = _createProperty.call(this, dest, vals[origin]);
-		_removeProperty.call(this, origin, null);
+		_removeProperty.call(this, origin);
 
 		notify.queue(origin, _notify.TYPE_MOVE, dest, origin);
 	}
