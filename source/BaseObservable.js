@@ -228,9 +228,23 @@ export default class BaseObservable {
 
 		if (was === undefined) throw new Error(_ERRNOINS);
 
-		const add = _ops.difference(now, was);
-		const remove = _ops.difference(was, now);
-		const update = _ops.intersection(now, was);
+		const add = _ops.differenceByValue(now, was);
+		const remove = _ops.differenceByValue(was, now);
+		const update = {};
+
+		for (let prop in remove) {
+			if (prop in add) {
+				update[prop] = add[prop];
+
+				delete add[prop];
+				delete remove[prop];
+			}
+			else if (prop in now) {
+				update[prop] = _ops.difference(now[prop], remove[prop]);
+
+				delete remove[prop];
+			}
+		}
 
 		removeProperties.call(this, remove);
 		updateProperties.call(this, update);
