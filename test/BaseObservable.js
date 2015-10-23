@@ -277,6 +277,35 @@ describe('BaseObservable', () => {
 			_assert.strictEqual(ins.a.a, 2);
 		});
 
+		it("should mutate properties from scalar to nested", () => {
+			Observable.configure(_factType, _factObs);
+
+			console.log('scalar > nested');
+
+			const ins = new Observable(_genObj, _factType);
+			const set = _observe.SET_PROPERTIES;
+
+			ins[set]({ a : 1 });
+			ins[set]({ a : { a : 1 }});
+
+			_assert(ins.a instanceof Observable);
+			_assert.strictEqual(ins.a.a, 1);
+		});
+
+		it("should mutate properties from nested to scalar", () => {
+			Observable.configure(_factType, _factObs);
+
+			console.log('nested > scalar');
+
+			const ins = new Observable(_genObj, _factType);
+			const set = _observe.SET_PROPERTIES;
+
+			ins[set]({ a : { a : 1 }});
+			ins[set]({ a : 1 });
+
+			_assert.strictEqual(ins.a, 1);
+		});
+
 		it("should remove nested properties from the instance", () => {
 			Observable.configure(_factType, _factObs);
 
