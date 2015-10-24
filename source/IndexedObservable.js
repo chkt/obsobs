@@ -1,10 +1,10 @@
 import Observable, * as _observe from './BaseObservable';
+import * as _ops from 'obsops';
 
 
-Observable.configure(
-	_observe.DEFAULT_TYPE,
-	(prop, val) => Array.isArray(val) ? new IndexedObservable(val) : undefined
-);
+_observe
+	.getFactoryQueue(_observe.DEFAULT_TYPE)
+	.append((prop, val) => Array.isArray(val) ? new IndexedObservable(val) : undefined);
 
 
 
@@ -13,7 +13,7 @@ const _notifier = new WeakMap();
 
 
 
-function* _iterate(source) {
+function* iterate(source) {
 	if (!Array.isArray(source)) throw new TypeError();
 
 	for (let i = 0, l = source.length; i < l; i += 1) {
@@ -25,6 +25,41 @@ function* _iterate(source) {
 	}
 }
 
+function resolve(now, was) {
+	const add = _ops.differenceByValue(now, was);
+	const remove = _ops.differenceByValue(was, now);
+	const update = [], move = [];
+
+	remove.forEach((item, index, source) => {
+		const rel = add.indexOf(item);
+
+		if (rel === index) {
+			update[index] = add[index];
+
+			delete add[index];
+			delete remove[index];
+		}
+		else if (rel !== -1) {
+			move[index] = rel;
+
+			delete add[rel];
+			delete remove[index];
+		}
+		else if (index in now) {
+			update[index] = _ops.difference(now[index], remove[index]);
+
+			delete remove[index];
+		}
+	});
+
+	return {
+		add,
+		remove,
+		update,
+		move
+	};
+}
+
 
 
 export default class IndexedObservable extends Observable {
@@ -34,7 +69,7 @@ export default class IndexedObservable extends Observable {
 			typeof type !== 'symbol'
 		) throw new TypeError();
 
-		super(_iterate, type);
+		super(iterate, resolve, type);
 
 		_length.set(this, 0);
 		_notifier.set(this, _observe.getNotifier.call(this));
@@ -96,8 +131,6 @@ export default class IndexedObservable extends Observable {
 
 		for (let i = 0, item = items[0]; i < ilen; item = items[++i]) remove[index + i] = item;
 
-		console.log(remove, move);
-
 		_observe.removeProperties.call(this, remove);
 		_observe.moveProperties.call(this, move);
 
@@ -117,5 +150,10 @@ export default class IndexedObservable extends Observable {
 		_notifier.get(this).removeListener(cb);
 
 		return this;
+	}
+
+
+	toJSON() {
+		return super.toJSON([]);
 	}
 }
