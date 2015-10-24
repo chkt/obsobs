@@ -8,7 +8,7 @@ import Queue from '../source/ConditionalQueue';
 describe("ConditionalQueue", () => {
 	describe('#process', () => {
 		it("should accept an Object as first, a nonempty string as second and any value as third arg", () => {
-			const obs = new Observable(function* () {}(), _observe.DEFAULT_TYPE);
+			const obs = new Observable();
 			const ins = new Queue();
 
 			_assert.doesNotThrow(() => ins.process({}, 'foo', "1"));
@@ -25,27 +25,25 @@ describe("ConditionalQueue", () => {
 		});
 
 		it("should only accept a nonempty string as second arg", () => {
-			const obs = new Observable(function* () {}, _observe.DEFAULT_TYPE);
 			const ins = new Queue();
 
-			_assert.throws(() => ins.process(obs, 1, "1"), TypeError);
-			_assert.throws(() => ins.process(obs, true, "1"), TypeError);
-			_assert.throws(() => ins.process(obs, "", "1"), TypeError);
-			_assert.throws(() => ins.process(obs, null, "1"), TypeError);
+			_assert.throws(() => ins.process({}, 1, "1"), TypeError);
+			_assert.throws(() => ins.process({}, true, "1"), TypeError);
+			_assert.throws(() => ins.process({}, "", "1"), TypeError);
+			_assert.throws(() => ins.process({}, null, "1"), TypeError);
 		});
 
 		it("should accept any value as third argument", () => {
-			const obs = new Observable(function* () {}, _observe.DEFAULT_TYPE);
 			const ins = new Queue();
 
-			_assert.doesNotThrow(() => ins.process(obs, 'foo', true));
-			_assert.doesNotThrow(() => ins.process(obs, 'foo', 1));
-			_assert.doesNotThrow(() => ins.process(obs, 'foo', "1"));
-			_assert.doesNotThrow(() => ins.process(obs, 'foo', null));
-			_assert.doesNotThrow(() => ins.process(obs, 'foo', undefined));
-			_assert.doesNotThrow(() => ins.process(obs, 'foo', {}));
-			_assert.doesNotThrow(() => ins.process(obs, 'foo', NaN));
-			_assert.doesNotThrow(() => ins.process(obs, 'foo', Symbol()));
+			_assert.doesNotThrow(() => ins.process({}, 'foo', true));
+			_assert.doesNotThrow(() => ins.process({}, 'foo', 1));
+			_assert.doesNotThrow(() => ins.process({}, 'foo', "1"));
+			_assert.doesNotThrow(() => ins.process({}, 'foo', null));
+			_assert.doesNotThrow(() => ins.process({}, 'foo', undefined));
+			_assert.doesNotThrow(() => ins.process({}, 'foo', {}));
+			_assert.doesNotThrow(() => ins.process({}, 'foo', NaN));
+			_assert.doesNotThrow(() => ins.process({}, 'foo', Symbol()));
 		});
 
 		it("should return the return value of the first function that does not return undefined", () => {
@@ -57,10 +55,9 @@ describe("ConditionalQueue", () => {
 				return 2;
 			}
 
-			const obs = new Observable(function* () {}(), _observe.DEFAULT_TYPE);
 			const ins = new Queue(fna, fnb, fnc);
 
-			_assert.strictEqual(ins.process(obs, 'foo', 0), 1);
+			_assert.strictEqual(ins.process({}, 'foo', 0), 1);
 		});
 
 		it("should return null if no function does not return undefined", () => {
@@ -68,10 +65,9 @@ describe("ConditionalQueue", () => {
 			function fnb() {}
 			function fnc() {}
 
-			const obs = new Observable(function* (){}(), _observe.DEFAULT_TYPE);
 			const ins = new Queue(fna, fnb, fnc);
 
-			_assert.strictEqual(ins.process(obs, 'foo', 0), null);
+			_assert.strictEqual(ins.process({}, 'foo', 0), null);
 		});
 	});
 });
