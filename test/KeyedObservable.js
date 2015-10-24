@@ -21,15 +21,15 @@ describe('KeyedObservable', () => {
 			_assert(ins instanceof Observable);
 		});
 
-		it("should take an object argument", () => {
+		it("should take an object as first and a symbol a second argument", () => {
 			const ins = new Observable({
 				a : 1
-			});
+			}, Symbol());
 
 			_assert(ins instanceof Observable);
 		});
 
-		it("should only take an object argument", () => {
+		it("should only take an object or undefined as first argument", () => {
 			_assert.throws(() => new Observable("1"), TypeError);
 			_assert.throws(() => new Observable(1), TypeError);
 			_assert.throws(() => new Observable(true), TypeError);
@@ -37,6 +37,16 @@ describe('KeyedObservable', () => {
 			_assert.throws(() => new Observable(Symbol()), TypeError);
 			_assert.throws(() => new Observable(NaN), TypeError);
 			_assert.throws(() => new Observable(null), TypeError);
+		});
+
+		it("should only take a symbol or undefined as second argument", () => {
+			_assert.throws(() => new Observable({}, "1"), TypeError);
+			_assert.throws(() => new Observable({}, 1), TypeError);
+			_assert.throws(() => new Observable({}, true), TypeError);
+			_assert.throws(() => new Observable({}, {}), TypeError);
+			_assert.throws(() => new Observable({}, () => 1), TypeError);
+			_assert.throws(() => new Observable({}, NaN), TypeError);
+			_assert.throws(() => new Observable({}, null), TypeError);
 		});
 	});
 

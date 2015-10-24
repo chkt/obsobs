@@ -1,10 +1,9 @@
 import Observable, * as _observe from './BaseObservable';
 
 
-Observable.configure(
-	_observe.DEFAULT_TYPE,
-	(prop, val) => typeof val === 'object' && val !== null ? new KeyedObservable(val) : undefined
-);
+_observe
+	.getFactoryQueue(_observe.DEFAULT_TYPE)
+	.append((prop, val) => typeof val === 'object' && val !== null ? new KeyedObservable(val) : undefined);
 
 
 
@@ -37,7 +36,12 @@ export const RELEASE_ALL = Symbol();
 
 export default class KeyedObservable extends Observable {
 	constructor(source = {}, type = _observe.DEFAULT_TYPE) {
-		super(_iterate, type);
+		if (
+			typeof source !== 'object' || source === null ||
+			typeof type !== 'symbol'
+		) throw new TypeError();
+
+		super(_observe.defaultIterator, _observe.defaultResolver, type);
 
 		_notifier.set(this, _observe.getNotifier.call(this));
 
