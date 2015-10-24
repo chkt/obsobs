@@ -189,18 +189,6 @@ describe('moveProperties', () => {
 
 
 describe('BaseObservable', () => {
-	describe('.configure', () => {
-		it("should accept a generator as first arg");
-
-		it("should only accept a symbol as second arg");
-
-		it("should accept any number of functions as additional arguments");
-
-		it("should only accept functions as additional arguments");
-
-		it("should be chainable");
-	});
-
 	describe('#constructor', () => {
 		it("should return an instance", () => {
 			const ins = new Observable();
@@ -333,7 +321,9 @@ describe('BaseObservable', () => {
 		});
 
 		it("should add nested properties to the instance", () => {
-			Observable.configure(_factType, _factObs);
+			_observe
+				.getFactoryQueue(_factType)
+				.append(_factObs);
 
 			const ins = Observable.Type(_factType);
 
@@ -352,7 +342,9 @@ describe('BaseObservable', () => {
 		});
 
 		it("should update nested properties on the instance", () => {
-			Observable.configure(_factType, _factObs);
+			_observe
+				.getFactoryQueue(_factType)
+				.append(_factObs);
 
 			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
@@ -377,7 +369,9 @@ describe('BaseObservable', () => {
 		});
 
 		it("should mutate properties from scalar to nested", () => {
-			Observable.configure(_factType, _factObs);
+			_observe
+				.getFactoryQueue(_factType)
+				.append(_factObs);
 
 			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
@@ -390,7 +384,9 @@ describe('BaseObservable', () => {
 		});
 
 		it("should mutate properties from nested to scalar", () => {
-			Observable.configure(_factType, _factObs);
+			_observe
+				.getFactoryQueue(_factType)
+				.append(_factObs);
 
 			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
@@ -402,7 +398,9 @@ describe('BaseObservable', () => {
 		});
 
 		it("should remove nested properties from the instance", () => {
-			Observable.configure(_factType, _factObs);
+			_observe
+				.getFactoryQueue(_factType)
+				.append(_factObs);
 
 			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
@@ -471,7 +469,9 @@ describe('BaseObservable', () => {
 		});
 
 		it("should notify when creating nested properties", done => {
-			Observable.configure(_factType, _factObs);
+			_observe
+				.getFactoryQueue(_factType)
+				.append(_factObs);
 
 			const ins = Observable.Type(_factType);
 
@@ -493,7 +493,9 @@ describe('BaseObservable', () => {
 		});
 
 		it("should notify when updating nested properties", done => {
-			Observable.configure(_factType, _factObs);
+			_observe
+				.getFactoryQueue(_factType)
+				.append(_factObs);
 
 			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
@@ -522,7 +524,9 @@ describe('BaseObservable', () => {
 		});
 
 		it("should notify when removing nested properties", done => {
-			Observable.configure(_factType, _factObs);
+			_observe
+				.getFactoryQueue(_factType)
+				.append(_factObs);
 
 			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;

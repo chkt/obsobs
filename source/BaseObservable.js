@@ -25,13 +25,13 @@ const _notifier = new WeakMap();
 
 
 
-function* _defaultIterator(source) {
+export function* defaultIterator(source) {
 	const names = Object.getOwnPropertyNames(source);
 
 	for (let i = 0, prop = names[0]; prop !== undefined; prop = names[++i]) yield [prop, source[prop]];
 }
 
-function _defaultResolver(now, was) {
+export function defaultResolver(now, was) {
 	const add = _ops.differenceByValue(now, was);
 	const remove = _ops.differenceByValue(was, now);
 	const update = {};
@@ -85,7 +85,7 @@ function _createSetter(prop) {
 
 function _createProperty(prop, val) {
 	const type = _type.get(this);
-	const factory = _factory.get(type);
+	const factory = getFactoryQueue(type);
 	const notify = _notifier.get(this);
 
 	if (type === undefined) throw new Error(_ERRNOINS);
@@ -129,7 +129,7 @@ function _removeProperty(prop) {
 
 function _updateProperty(prop, val) {
 	const type = _type.get(this);
-	const factory = _factory.get(type);
+	const factory = getFactoryQueue(type);
 	const notify = _notifier.get(this);
 
 	if (type === undefined) throw new Error(_ERRNOINS);
@@ -158,6 +158,15 @@ function _updateProperty(prop, val) {
 	}
 }
 
+
+
+export function getFactoryQueue(type) {
+	if (typeof type !== 'symbol') throw new TypeError();
+
+	if (!_factory.has(type)) _factory.set(type, new Queue());
+
+	return _factory.get(type);
+}
 
 
 export function getNotifier() {
@@ -246,25 +255,13 @@ export function moveProperties(source) {
 
 
 export default class BaseObservable {
-	static configure(type, ...factory) {
-		if (typeof type !== 'symbol') throw new TypeError();
-
-		if (!_factory.has(type)) _factory.set(type, new Queue());
-
-		_factory.get(type).append(...factory);
-
-		return this;
-	}
-
-
-
 	static Type(type) {
 		if (typeof type !== 'symbol') throw new TypeError();
 
-		return new BaseObservable(_defaultIterator, _defaultResolver, type);
+		return new BaseObservable(defaultIterator, defaultResolver, type);
 	}
 
-	constructor(iterate = _defaultIterator, resolve = _defaultResolver, type = DEFAULT_TYPE) {
+	constructor(iterate = defaultIterator, resolve = defaultResolver, type = DEFAULT_TYPE) {
 		if (
 			//IMPLEMENT validate generator
 			typeof resolve !== 'function' ||
