@@ -17,10 +17,45 @@ const _factory = new Map();
 
 const _type = new WeakMap();
 const _iterator = new WeakMap();
+const _resolver = new WeakMap();
 
 const _value = new WeakMap();
 const _child = new WeakMap();
 const _notifier = new WeakMap();
+
+
+
+function* _defaultIterator(source) {
+	const names = Object.getOwnPropertyNames(source);
+
+	for (let i = 0, prop = names[0]; prop !== undefined; prop = names[++i]) yield [prop, source[prop]];
+}
+
+function _defaultResolver(now, was) {
+	const add = _ops.differenceByValue(now, was);
+	const remove = _ops.differenceByValue(was, now);
+	const update = {};
+
+	for (let prop in remove) {
+		if (prop in add) {
+			update[prop] = add[prop];
+
+			delete add[prop];
+			delete remove[prop];
+		}
+		else if (prop in now) {
+			update[prop] = _ops.difference(now[prop], remove[prop]);
+
+			delete remove[prop];
+		}
+	}
+
+	return {
+		add,
+		remove,
+		update
+	};
+}
 
 
 
@@ -135,6 +170,8 @@ export function getNotifier() {
 
 
 export function createProperties(source) {
+	if (typeof source !== 'object' || source === null) throw new TypeError();
+
 	const spec = {};
 	const notify = _notifier.get(this);
 
@@ -148,6 +185,8 @@ export function createProperties(source) {
 }
 
 export function updateProperties(source) {
+	if (typeof source !== 'object' || source === null) throw new TypeError();
+
 	const vals = _value.get(this);
 	const child = _child.get(this);
 	const notify = _notifier.get(this);
@@ -167,6 +206,8 @@ export function updateProperties(source) {
 }
 
 export function removeProperties(source) {
+	if (typeof source !== 'object' || source === null) throw new TypeError();
+
 	const vals = _value.get(this), notify = _notifier.get(this);
 
 	if (vals === undefined) throw new TypeError(_ERRNOINS);
@@ -181,6 +222,8 @@ export function removeProperties(source) {
 }
 
 export function moveProperties(source) {
+	if (typeof source !== 'object' || source === null) throw new TypeError();
+
 	const spec = {};
 	const vals = _value.get(this);
 
@@ -214,14 +257,23 @@ export default class BaseObservable {
 	}
 
 
-	constructor(iterate, type = DEFAULT_TYPE) {
+
+	static Type(type) {
+		if (typeof type !== 'symbol') throw new TypeError();
+
+		return new BaseObservable(_defaultIterator, _defaultResolver, type);
+	}
+
+	constructor(iterate = _defaultIterator, resolve = _defaultResolver, type = DEFAULT_TYPE) {
 		if (
 			//IMPLEMENT validate generator
+			typeof resolve !== 'function' ||
 			typeof type !== 'symbol'
 		) throw new TypeError();
 
 		_type.set(this, type);
 		_iterator.set(this, iterate);
+		_resolver.set(this, resolve);
 
 		_value.set(this, {});
 		_child.set(this, {});
@@ -236,27 +288,15 @@ export default class BaseObservable {
 
 		if (was === undefined) throw new Error(_ERRNOINS);
 
-		const add = _ops.differenceByValue(now, was);
-		const remove = _ops.differenceByValue(was, now);
-		const update = {};
+		const { add, remove, update, move } = _resolver.get(this).call(this, now, was);
 
-		for (let prop in remove) {
-			if (prop in add) {
-				update[prop] = add[prop];
+		if (remove instanceof Object && Object.keys(remove).length !== 0) removeProperties.call(this, remove);
 
-				delete add[prop];
-				delete remove[prop];
-			}
-			else if (prop in now) {
-				update[prop] = _ops.difference(now[prop], remove[prop]);
+		if (move instanceof Object && Object.keys(move).length !== 0) moveProperties.call(this, move);
 
-				delete remove[prop];
-			}
-		}
+		if (update instanceof Object && Object.keys(update).length !== 0) updateProperties.call(this, update);
 
-		removeProperties.call(this, remove);
-		updateProperties.call(this, update);
-		createProperties.call(this, add);
+		if (add instanceof Object && Object.keys(add)) createProperties.call(this, add);
 
 		return this;
 	}
