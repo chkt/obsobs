@@ -5,21 +5,11 @@ import Notifier, * as _notify from '../source/Notifier';
 
 
 
-const _genEmpty = function* () {};
-
-const _genObj = function* (source) {
-	for (let prop in source) {
-		if (!source.hasOwnProperty(prop)) continue;
-
-		yield [prop, source[prop]];
-	}
-};
-
 const _factType = Symbol();
 
 const _factObs = function(prop, val, target) {
 	if (typeof val === 'object' && val !== null) {
-		if (!(target instanceof Observable)) target = new Observable(_genObj, _factType);
+		if (!(target instanceof Observable)) target = Observable.Type(_factType);
 
 		target[_observe.SET_PROPERTIES](val);
 
@@ -31,7 +21,7 @@ const _factObs = function(prop, val, target) {
 
 describe('getNotifier', () => {
 	it("expects this to be an observable", () => {
-		const ins = new Observable(_genEmpty, _observe.DEFAULT_TYPE);
+		const ins = new Observable();
 
 		_assert.throws(() => _observe.getNotifier(), Error);
 		_assert.throws(() => _observe.getNotifier.call(null), Error);
@@ -39,7 +29,7 @@ describe('getNotifier', () => {
 	});
 
 	it("returns the notifier associated with an observable", done => {
-		const ins = new Observable(_genObj, _observe.DEFAULT_TYPE);
+		const ins = new Observable();
 
 		const notify = _observe.getNotifier.call(ins);
 
@@ -51,22 +41,35 @@ describe('getNotifier', () => {
 
 describe('createProperties', () => {
 	it("expects this to be an observable", () => {
-		const ins = new Observable(_genEmpty, _observe.DEFAULT_TYPE);
+		const ins = new Observable();
 
 		_assert.throws(() => _observe.createProperties(), Error);
-		_assert.throws(() => _observe.createProperties.call(null), Error);
-		_assert.doesNotThrow(() => _observe.createProperties.call(ins));
+		_assert.throws(() => _observe.createProperties.call(null, {}), Error);
+		_assert.doesNotThrow(() => _observe.createProperties.call(ins, {}));
+	});
+
+	it("should only accept an object as first arg", () => {
+		const ins = new Observable();
+
+		_assert.throws(() => _observe.createProperties.call(ins), TypeError);
+		_assert.throws(() => _observe.createProperties.call(ins, true), TypeError);
+		_assert.throws(() => _observe.createProperties.call(ins, 1), TypeError);
+		_assert.throws(() => _observe.createProperties.call(ins, "1"), TypeError);
+		_assert.throws(() => _observe.createProperties.call(ins, null), TypeError);
+		_assert.doesNotThrow(() => _observe.createProperties.call(ins, {}));
+		_assert.throws(() => _observe.createProperties.call(ins, () => 1), TypeError);
+		_assert.throws(() => _observe.createProperties.call(ins, Symbol()), TypeError);
 	});
 
 	it("creates properties from a source object", () => {
-		const ins = new Observable(_genObj, _observe.DEFAULT_TYPE);
+		const ins = new Observable();
 
 		_observe.createProperties.call(ins, { a : 1 });
 		_assert.strictEqual(ins.a, 1);
 	});
 
 	it("does not allow creating duplicate properties", () => {
-		const ins = new Observable(_genObj, _observe.DEFAULT_TYPE);
+		const ins = new Observable();
 
 		_assert.doesNotThrow(() => _observe.createProperties.call(ins, { a : 1 }));
 		_assert.throws(() => _observe.createProperties.call(ins, { a : 1 }), Error);
@@ -75,15 +78,28 @@ describe('createProperties', () => {
 
 describe('removeProperties', () => {
 	it("expects this to be an observable", () => {
-		const ins = new Observable(_genEmpty, _observe.DEFAULT_TYPE);
+		const ins = new Observable();
 
 		_assert.throws(() => _observe.removeProperties(), Error);
-		_assert.throws(() => _observe.removeProperties.call(null), Error);
+		_assert.throws(() => _observe.removeProperties.call(null, {}), Error);
 		_assert.doesNotThrow(() => _observe.removeProperties.call(ins, {}));
 	});
 
+	it("should only accept an object as first arg", () => {
+		const ins = new Observable();
+
+		_assert.throws(() => _observe.removeProperties.call(ins), TypeError);
+		_assert.throws(() => _observe.removeProperties.call(ins, true), TypeError);
+		_assert.throws(() => _observe.removeProperties.call(ins, 1), TypeError);
+		_assert.throws(() => _observe.removeProperties.call(ins, "1"), TypeError);
+		_assert.throws(() => _observe.removeProperties.call(ins, null), TypeError);
+		_assert.doesNotThrow(() => _observe.removeProperties.call(ins, {}));
+		_assert.throws(() => _observe.removeProperties.call(ins, () => 1), TypeError);
+		_assert.throws(() => _observe.removeProperties.call(ins, Symbol()), TypeError);
+	});
+
 	it("removes properties from a source object", () => {
-		const ins = new Observable(_genObj, _observe.DEFAULT_TYPE);
+		const ins = new Observable();
 
 		_observe.createProperties.call(ins, { a : 1 });
 
@@ -92,23 +108,63 @@ describe('removeProperties', () => {
 	});
 
 	it("does not allow removing noexistant properties", () => {
-		const ins = new Observable(_genObj, _observe.DEFAULT_TYPE);
+		const ins = new Observable();
 
 		_assert.throws(() => _observe.removeProperties.call(ins, { a : 1 }), Error);
 	});
 });
 
-describe('moveProperties', () => {
+describe("updateProperties", () => {
 	it("expects this to be an observable", () => {
-		const ins = new Observable(_genEmpty, _observe.DEFAULT_TYPE);
+		const ins = new Observable();
 
-		_assert.throws(() => _observe.moveProperties(), Error);
-		_assert.throws(() => _observe.moveProperties.call(null), Error);
-		_assert.doesNotThrow(() => _observe.moveProperties.call(ins));
+		_assert.throws(() => _observe.updateProperties(), Error);
+		_assert.throws(() => _observe.updateProperties.call(null, {}), Error);
+		_assert.doesNotThrow(() => _observe.updateProperties.call(ins, {}));
 	});
 
-	it("moves properties of a source object", () => {
-		const ins = new Observable(_genObj, _observe.DEFAULT_TYPE);
+	it("should only accept an object as first arg", () => {
+		const ins = new Observable();
+
+		_assert.throws(() => _observe.updateProperties.call(ins), TypeError);
+		_assert.throws(() => _observe.updateProperties.call(ins, true), TypeError);
+		_assert.throws(() => _observe.updateProperties.call(ins, 1), TypeError);
+		_assert.throws(() => _observe.updateProperties.call(ins, "1"), TypeError);
+		_assert.throws(() => _observe.updateProperties.call(ins, null), TypeError);
+		_assert.doesNotThrow(() => _observe.updateProperties.call(ins, {}));
+		_assert.throws(() => _observe.updateProperties.call(ins, () => 1), TypeError);
+		_assert.throws(() => _observe.updateProperties.call(ins, Symbol()), TypeError);
+	});
+
+	it("should update properties on the instance");
+
+	it("should not allow updating noexistant properties");
+});
+
+describe('moveProperties', () => {
+	it("expects this to be an observable", () => {
+		const ins = new Observable();
+
+		_assert.throws(() => _observe.moveProperties(), Error);
+		_assert.throws(() => _observe.moveProperties.call(null, {}), Error);
+		_assert.doesNotThrow(() => _observe.moveProperties.call(ins, {}));
+	});
+
+	it("should only accept an object as first arg", () => {
+		const ins = new Observable();
+
+		_assert.throws(() => _observe.moveProperties.call(ins), TypeError);
+		_assert.throws(() => _observe.moveProperties.call(ins, true), TypeError);
+		_assert.throws(() => _observe.moveProperties.call(ins, 1), TypeError);
+		_assert.throws(() => _observe.moveProperties.call(ins, "1"), TypeError);
+		_assert.throws(() => _observe.moveProperties.call(ins, null), TypeError);
+		_assert.doesNotThrow(() => _observe.moveProperties.call(ins, {}));
+		_assert.throws(() => _observe.moveProperties.call(ins, () => 1), TypeError);
+		_assert.throws(() => _observe.moveProperties.call(ins, Symbol()), TypeError);
+	});
+
+	it("should move properties of a source object", () => {
+		const ins = new Observable();
 
 		_observe.createProperties.call(ins, { a : 1 });
 
@@ -116,14 +172,14 @@ describe('moveProperties', () => {
 		_assert.strictEqual(ins.b, 1);
 	});
 
-	it("does not allow moving nonexistant properties", () => {
-		const ins = new Observable(_genObj, _observe.DEFAULT_TYPE);
+	it("should not allow moving nonexistant properties", () => {
+		const ins = new Observable();
 
 		_assert.throws(() => _observe.moveProperties.call(ins, { a : 'b' }), Error);
 	});
 
-	it("does not allow moving to existing properties", () => {
-		const ins = new Observable(_genObj, _observe.DEFAULT_TYPE);
+	it("should not allow moving to existing properties", () => {
+		const ins = new Observable();
 
 		_observe.createProperties.call(ins, { a : 1, b : 2 });
 
@@ -146,35 +202,80 @@ describe('BaseObservable', () => {
 	});
 
 	describe('#constructor', () => {
-		it("should accept an iterator as first and a symbol as second arg", () => {
-			_assert.doesNotThrow(() => new Observable(_genEmpty, Symbol()));
-		});
-
-		it("should only accept an iterator as first arg");
-
-		it("should only accept a symbol as second arg", () => {
-			_assert.throws(() => new Observable(_genEmpty, 'foo'), TypeError);
-			_assert.throws(() => new Observable(_genEmpty, {}), TypeError);
-			_assert.throws(() => new Observable(_genEmpty, () => 1), TypeError);
-		});
-
 		it("should return an instance", () => {
-			const ins = new Observable(_genEmpty, Symbol());
+			const ins = new Observable();
 
 			_assert(ins instanceof Observable);
+		});
+
+		it("should only accept a generator as first arg", () => {
+			function* generate() {}
+
+			_assert.throws(() => new Observable(true), TypeError);
+			_assert.throws(() => new Observable(1), TypeError);
+			_assert.throws(() => new Observable("1"), TypeError);
+			_assert.throws(() => new Observable(null), TypeError);
+			_assert.throws(() => new Observable({}), TypeError);
+			_assert.throws(() => new Observable(() => 1), TypeError);
+			_assert.doesNotThrow(() => new Observable(generate));
+			_assert.throws(() => new Observable(Symbol()), TypeError);
+		});
+
+		it("should only accept a function as second arg", () => {
+			function* generate() {}
+			function resolve() {}
+
+			_assert.throws(() => new Observable(generate, true), TypeError);
+			_assert.throws(() => new Observable(generate, 1), TypeError);
+			_assert.throws(() => new Observable(generate, "1"), TypeError);
+			_assert.throws(() => new Observable(generate, null), TypeError);
+			_assert.throws(() => new Observable(generate, {}), TypeError);
+			_assert.doesNotThrow(() => new Observable(generate, resolve));
+			_assert.throws(() => new Observable(generate, Symbol()), TypeError);
+		});
+
+		it("should only accept a symbol as third arg", () => {
+			function* generate() {}
+			function resolve() {}
+
+			_assert.throws(() => new Observable(generate, resolve, true), TypeError);
+			_assert.throws(() => new Observable(generate, resolve, 1), TypeError);
+			_assert.throws(() => new Observable(generate, resolve, "1"), TypeError);
+			_assert.throws(() => new Observable(generate, resolve, null), TypeError);
+			_assert.throws(() => new Observable(generate, resolve, {}), TypeError);
+			_assert.throws(() => new Observable(generate, resolve, () => 1), TypeError);
+			_assert.doesNotThrow(() => new Observable(generate, resolve, Symbol()), TypeError);
+		});
+	});
+
+	describe('.Type', () => {
+		it("should return an instance", () => {
+			const ins = Observable.Type(_factType);
+
+			_assert(ins instanceof Observable);
+		});
+
+		it("should only accept a symbol as first argument", () => {
+			_assert.throws(() => Observable.Type(), TypeError);
+			_assert.throws(() => Observable.Type(true), TypeError);
+			_assert.throws(() => Observable.Type(1), TypeError);
+			_assert.throws(() => Observable.Type("1"), TypeError);
+			_assert.throws(() => Observable.Type(null), TypeError);
+			_assert.throws(() => Observable.Type({}), TypeError);
+			_assert.throws(() => Observable.Type(() => 1), TypeError);
 		});
 	});
 
 
 	describe('#[SET_PROPERTIES]', () => {
 		it("should accept an object argument", () => {
-			const ins = new Observable(_genEmpty);
+			const ins = new Observable();
 
 			_assert.doesNotThrow(() => ins[_observe.SET_PROPERTIES]({}));
 		});
 
 		it("should only accept an object argument", () => {
-			const ins = new Observable(_genEmpty());
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			_assert.throws(() => ins[set](true), TypeError);
@@ -186,7 +287,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should add scalar properties to the instance", () => {
-			const ins = new Observable(_genObj);
+			const ins = new Observable();
 
 			ins[_observe.SET_PROPERTIES]({
 				a : 1,
@@ -200,7 +301,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should update scalar properties on the instance", () => {
-			const ins = new Observable(_genObj);
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({
@@ -215,7 +316,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should remove scalar properties from the instance", () => {
-			const ins = new Observable(_genObj);
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({
@@ -234,7 +335,7 @@ describe('BaseObservable', () => {
 		it("should add nested properties to the instance", () => {
 			Observable.configure(_factType, _factObs);
 
-			const ins = new Observable(_genObj, _factType);
+			const ins = Observable.Type(_factType);
 
 			ins[_observe.SET_PROPERTIES]({
 				a : {
@@ -253,7 +354,7 @@ describe('BaseObservable', () => {
 		it("should update nested properties on the instance", () => {
 			Observable.configure(_factType, _factObs);
 
-			const ins = new Observable(_genObj, _factType);
+			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({
@@ -278,7 +379,7 @@ describe('BaseObservable', () => {
 		it("should mutate properties from scalar to nested", () => {
 			Observable.configure(_factType, _factObs);
 
-			const ins = new Observable(_genObj, _factType);
+			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({ a : 1 });
@@ -291,7 +392,7 @@ describe('BaseObservable', () => {
 		it("should mutate properties from nested to scalar", () => {
 			Observable.configure(_factType, _factObs);
 
-			const ins = new Observable(_genObj, _factType);
+			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({ a : { a : 1 }});
@@ -303,7 +404,7 @@ describe('BaseObservable', () => {
 		it("should remove nested properties from the instance", () => {
 			Observable.configure(_factType, _factObs);
 
-			const ins = new Observable(_genObj, _factType);
+			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({
@@ -319,7 +420,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should notify when creating scalar properties", done => {
-			const ins = new Observable(_genObj);
+			const ins = new Observable();
 
 			ins[_observe.SET_PROPERTIES]({ a : 1 });
 
@@ -334,7 +435,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should notify when updating scalar properties", done => {
-			const ins = new Observable(_genObj);
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({ a : 1 });
@@ -352,7 +453,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should notify when removing scalar properties", done => {
-			const ins = new Observable(_genObj);
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({ a : 1});
@@ -372,7 +473,7 @@ describe('BaseObservable', () => {
 		it("should notify when creating nested properties", done => {
 			Observable.configure(_factType, _factObs);
 
-			const ins = new Observable(_genObj, _factType);
+			const ins = Observable.Type(_factType);
 
 			ins[_observe.SET_PROPERTIES]({
 				a : {
@@ -394,7 +495,7 @@ describe('BaseObservable', () => {
 		it("should notify when updating nested properties", done => {
 			Observable.configure(_factType, _factObs);
 
-			const ins = new Observable(_genObj, _factType);
+			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({
@@ -423,7 +524,7 @@ describe('BaseObservable', () => {
 		it("should notify when removing nested properties", done => {
 			Observable.configure(_factType, _factObs);
 
-			const ins = new Observable(_genObj, _factType);
+			const ins = Observable.Type(_factType);
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({
@@ -446,7 +547,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should be chainable", () => {
-			const ins = new Observable(_genObj);
+			const ins = new Observable();
 
 			_assert.strictEqual(ins[_observe.SET_PROPERTIES]({}), ins);
 		});
@@ -455,7 +556,7 @@ describe('BaseObservable', () => {
 
 	describe('#[Symbol.iterator]', () => {
 		it("should return an iterator", () => {
-			const ins = new Observable(_genEmpty, Symbol());
+			const ins = new Observable();
 			const iterator = ins[Symbol.iterator]();
 
 			_assert(typeof iterator === 'object');
@@ -464,7 +565,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should iterate over all property values", () => {
-			const ins = new Observable(_genObj, _observe.DEFAULT_TYPE);
+			const ins = new Observable();
 
 			_observe.createProperties.call(ins, {
 				a : 1,
