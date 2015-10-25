@@ -24,13 +24,23 @@ const _child = new WeakMap();
 const _notifier = new WeakMap();
 
 
-
+/**
+ * The default iteration generator
+ * @param {Object} source - The iterable
+ * @yields [{String}, {*}]
+ */
 export function* defaultIterator(source) {
 	const names = Object.getOwnPropertyNames(source);
 
 	for (let i = 0, prop = names[0]; prop !== undefined; prop = names[++i]) yield [prop, source[prop]];
 }
 
+/**
+ * The default update resolver
+ * @param {Object} now - The current state
+ * @param {Object} was - The previous state
+ * @returns {{add: {Object}, remove: {Object}, update: {Object}}}
+ */
 export function defaultResolver(now, was) {
 	const add = _ops.differenceByValue(now, was);
 	const remove = _ops.differenceByValue(was, now);
@@ -58,13 +68,24 @@ export function defaultResolver(now, was) {
 }
 
 
-
+/**
+ * Returns a generic getter function for this[prop]
+ * @param {String} prop - The instance property
+ * @returns {Function}
+ * @private
+ */
 function _createGetter(prop) {
 	const child = _child.get(this), vals = _value.get(this);
 
 	return () => prop in child ? child[prop] : vals[prop];
 }
 
+/**
+ * Returns a generic setter function for this[prop]
+ * @param {String} prop - The instance property
+ * @returns {Function}
+ * @private
+ */
 function _createSetter(prop) {
 	const notify = _notifier.get(this);
 	const vals = _value.get(this);
@@ -83,6 +104,15 @@ function _createSetter(prop) {
 }
 
 
+/**
+ * Creates the property represented by prop,val
+ * @param {String} prop - The property name
+ * @param {*} val - The property value
+ * @returns {{get: {Function}, set: {Function}, configurable: {Boolean}, enumerable: {Boolean}}}
+ * @private
+ * @throws {Error} _ERRNOINS if this does not point to a registered instance
+ * @throws {Error} _ERRPROP if the property already exists
+ */
 function _createProperty(prop, val) {
 	const type = _type.get(this);
 	const factory = getFactoryQueue(type);
@@ -111,6 +141,12 @@ function _createProperty(prop, val) {
 	};
 }
 
+/**
+ * Removes the property referenced by prop
+ * @param {String} prop - The property name
+ * @private
+ * @throws {Error} _ERRPROP if the property does not exist
+ */
 function _removeProperty(prop) {
 	const vals = _value.get(this);
 	const child = _child.get(this);
@@ -127,6 +163,14 @@ function _removeProperty(prop) {
 	delete this[prop];
 }
 
+/**
+ * Updates the property value of the property represented by prop,val
+ * @param {String} prop - The property name
+ * @param {*} val - The property value
+ * @private
+ * @throws {Error} _ERRNOINS if this does not point to a registered instance
+ * @throws {Error} _ERRPROP if the property does not exist
+ */
 function _updateProperty(prop, val) {
 	const type = _type.get(this);
 	const factory = getFactoryQueue(type);
@@ -159,7 +203,11 @@ function _updateProperty(prop, val) {
 }
 
 
-
+/**
+ * Returns the ConditionalQueue associated with type
+ * @param {Symbol} type - The type identifier
+ * @returns {ConditionalQueue}
+ */
 export function getFactoryQueue(type) {
 	if (typeof type !== 'symbol') throw new TypeError();
 
@@ -169,6 +217,11 @@ export function getFactoryQueue(type) {
 }
 
 
+/**
+ * Returns the notifier associated with this
+ * @returns {Notifier}
+ * @throws {Error} _ERRNOINS if this does not point to a registered instance
+ */
 export function getNotifier() {
 	const notify = _notifier.get(this);
 
@@ -178,6 +231,10 @@ export function getNotifier() {
 }
 
 
+/**
+ * Creates the properties represented by source
+ * @param {Object} source - The property source
+ */
 export function createProperties(source) {
 	if (typeof source !== 'object' || source === null) throw new TypeError();
 
@@ -193,6 +250,11 @@ export function createProperties(source) {
 	Object.defineProperties(this, spec);
 }
 
+/**
+ * Updates the properties represented by source
+ * @param {Object} source - The property source
+ * @throws {Error} _ERRNOINS if this does not point to a registered instance
+ */
 export function updateProperties(source) {
 	if (typeof source !== 'object' || source === null) throw new TypeError();
 
@@ -214,6 +276,11 @@ export function updateProperties(source) {
 	}
 }
 
+/**
+ * Removes the properties represented by source
+ * @param {Object} source - The property source
+ * @throws {Error} _ERRNOINS if this does not point to a registered instance
+ */
 export function removeProperties(source) {
 	if (typeof source !== 'object' || source === null) throw new TypeError();
 
@@ -230,6 +297,11 @@ export function removeProperties(source) {
 	}
 }
 
+/**
+ * Moves the properties represented by source
+ * @param {Object} source - The property source
+ * @throws {Error} _ERRNOINS if this does not point to a registered instance
+ */
 export function moveProperties(source) {
 	if (typeof source !== 'object' || source === null) throw new TypeError();
 
@@ -255,12 +327,24 @@ export function moveProperties(source) {
 
 
 export default class BaseObservable {
+	/**
+	 * Returns an instance created from defaultIterator, defaultGenerator and type
+	 * @param {Symbol} type - The type identifier
+	 * @constructor
+	 */
 	static Type(type) {
 		if (typeof type !== 'symbol') throw new TypeError();
 
 		return new BaseObservable(defaultIterator, defaultResolver, type);
 	}
 
+	/**
+	 * Creates a new instance
+	 * @param {Generator} iterate - The iteration generator
+	 * @param {Function} resolve - The state update resolver
+	 * @param {Symbol} type - The type identifier
+	 * @throws {TypeError} if any of the arguments is not to spec
+	 */
 	constructor(iterate = defaultIterator, resolve = defaultResolver, type = DEFAULT_TYPE) {
 		if (
 			//IMPLEMENT validate generator
@@ -278,6 +362,12 @@ export default class BaseObservable {
 	}
 
 
+	/**
+	 * Updates the internal state of the instance and all children
+	 * @param {Object} now - The new state
+	 * @returns {BaseObservable}
+	 * @throws {Error} _ERRNOINS if not called on a registered instance
+	 */
 	[SET_PROPERTIES](now) {
 		if (typeof now !== 'object' || now === null) throw new TypeError();
 
@@ -299,6 +389,10 @@ export default class BaseObservable {
 	}
 
 
+	/**
+	 * The iterator
+	 * @yields [{String}, {*}]
+	 */
 	*[Symbol.iterator]() {
 		const vals = _value.get(this);
 
