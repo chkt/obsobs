@@ -41,6 +41,7 @@
 
 	"dependencies" : {
 		"qee" : "~0.1",
+		"prov" : "~0.1",
 		"obsops" : "~0.1"
 	}
 }
