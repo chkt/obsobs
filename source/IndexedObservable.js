@@ -2,11 +2,6 @@ import Observable, * as _observe from './BaseObservable';
 import * as _ops from 'obsops';
 
 
-_observe
-	.getFactoryQueue(_observe.DEFAULT_TYPE)
-	.append((prop, val) => Array.isArray(val) ? new IndexedObservable(val) : undefined);
-
-
 
 const _length = new WeakMap();
 const _notifier = new WeakMap();
@@ -63,13 +58,10 @@ function resolve(now, was) {
 
 
 export default class IndexedObservable extends Observable {
-	constructor(source = [], type = _observe.DEFAULT_TYPE) {
-		if (
-			!Array.isArray(source) ||
-			typeof type !== 'symbol'
-		) throw new TypeError();
+	constructor(source = []) {
+		if (!Array.isArray(source)) throw new TypeError();
 
-		super(iterate, resolve, type);
+		super();
 
 		_length.set(this, 0);
 		_notifier.set(this, _observe.getNotifier.call(this));
@@ -157,3 +149,17 @@ export default class IndexedObservable extends Observable {
 		return super.toJSON([]);
 	}
 }
+
+
+
+_observe
+	.getFactoryQueue(_observe.DEFAULT_TYPE)
+	.append((prop, val) => Array.isArray(val) ? new IndexedObservable(val) : undefined);
+
+_observe
+	.getConfiguration(IndexedObservable)
+	.set({
+		scalarType : Array,
+		scalarIterator : iterate,
+		propertyResolver : resolve
+	});
