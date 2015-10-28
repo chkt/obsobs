@@ -1,6 +1,7 @@
 import _assert from 'assert';
 
 import * as _notify from '../source/Notifier.js';
+import * as _observe from '../source/BaseObservable.js';
 import Observable, {
 	ADD_PROPS,
 	REMOVE_PROPS,
@@ -14,6 +15,11 @@ import Observable, {
 
 
 describe('KeyedObservable', () => {
+	_observe
+		.getConfiguration(Observable)
+		.set({ factoryType : _observe.DEFAULT_TYPE });
+
+
 	describe('#constructor', () => {
 		it("should create an instance", () => {
 			const ins = new Observable();
@@ -21,37 +27,21 @@ describe('KeyedObservable', () => {
 			_assert(ins instanceof Observable);
 		});
 
-		it("should take an object as first and a symbol a second argument", () => {
-			const ins = new Observable({
-				a : 1
-			}, Symbol());
-
-			_assert(ins instanceof Observable);
-		});
-
 		it("should only take an object or undefined as first argument", () => {
+			_assert.doesNotThrow(() => new Observable());
 			_assert.throws(() => new Observable("1"), TypeError);
 			_assert.throws(() => new Observable(1), TypeError);
 			_assert.throws(() => new Observable(true), TypeError);
+			_assert.doesNotThrow(() => new Observable({ a: 1 }));
 			_assert.throws(() => new Observable(() => 1), TypeError);
 			_assert.throws(() => new Observable(Symbol()), TypeError);
 			_assert.throws(() => new Observable(NaN), TypeError);
 			_assert.throws(() => new Observable(null), TypeError);
 		});
-
-		it("should only take a symbol or undefined as second argument", () => {
-			_assert.throws(() => new Observable({}, "1"), TypeError);
-			_assert.throws(() => new Observable({}, 1), TypeError);
-			_assert.throws(() => new Observable({}, true), TypeError);
-			_assert.throws(() => new Observable({}, {}), TypeError);
-			_assert.throws(() => new Observable({}, () => 1), TypeError);
-			_assert.throws(() => new Observable({}, NaN), TypeError);
-			_assert.throws(() => new Observable({}, null), TypeError);
-		});
 	});
 
 	describe('#[ADD_PROPS]', () => {
-		it("should expect an object", () => {
+		it("should expect an object as argument", () => {
 			const ins = new Observable();
 
 			_assert.throws(() => ins[ADD_PROPS](), TypeError);
@@ -96,6 +86,8 @@ describe('KeyedObservable', () => {
 					c : 3
 				}
 			});
+
+			console.log(ins.a);
 
 			_assert.strictEqual(ins.a.a, 1);
 			_assert.strictEqual(ins.a.b, 2);
