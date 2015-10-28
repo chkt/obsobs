@@ -1,5 +1,8 @@
 import * as _ops from 'obsops';
 
+import Provider from 'prov/dist/Provider';
+import ConfigProvider from 'prov/dist/ConfigProvider';
+
 import Notifier, * as _notify from './Notifier';
 import Queue from './ConditionalQueue';
 
@@ -13,7 +16,13 @@ const _ERRNOINS = "not an instance";
 const _ERRPROP = "invalid property manipulation";
 
 
-const _factory = new Map();
+const _factory = new Provider(id => new Queue());
+const _config = new ConfigProvider({
+	factoryType : DEFAULT_TYPE,
+	scalarType : Object,
+	scalarIterator : defaultIterator,
+	propertyResolver : defaultResolver
+});
 
 const _type = new WeakMap();
 const _iterator = new WeakMap();
@@ -203,18 +212,9 @@ function _updateProperty(prop, val) {
 }
 
 
-/**
- * Returns the ConditionalQueue associated with type
- * @param {Symbol} type - The type identifier
- * @returns {ConditionalQueue}
- */
-export function getFactoryQueue(type) {
-	if (typeof type !== 'symbol') throw new TypeError();
 
-	if (!_factory.has(type)) _factory.set(type, new Queue());
-
-	return _factory.get(type);
-}
+export const getFactoryQueue = _factory.get.bind(_factory);
+export const getConfiguration = _config.get.bind(_config);
 
 
 /**
@@ -328,33 +328,14 @@ export function moveProperties(source) {
 
 export default class BaseObservable {
 	/**
-	 * Returns an instance created from defaultIterator, defaultGenerator and type
-	 * @param {Symbol} type - The type identifier
-	 * @constructor
-	 */
-	static Type(type) {
-		if (typeof type !== 'symbol') throw new TypeError();
-
-		return new BaseObservable(defaultIterator, defaultResolver, type);
-	}
-
-	/**
 	 * Creates a new instance
-	 * @param {Generator} iterate - The iteration generator
-	 * @param {Function} resolve - The state update resolver
-	 * @param {Symbol} type - The type identifier
-	 * @throws {TypeError} if any of the arguments is not to spec
 	 */
-	constructor(iterate = defaultIterator, resolve = defaultResolver, type = DEFAULT_TYPE) {
-		if (
-			//IMPLEMENT validate generator
-			typeof resolve !== 'function' ||
-			typeof type !== 'symbol'
-		) throw new TypeError();
+	constructor() {
+		const config = _config.get(this.constructor);
 
-		_type.set(this, type);
-		_iterator.set(this, iterate);
-		_resolver.set(this, resolve);
+		_type.set(this, config.factoryType);
+		_iterator.set(this, config.scalarIterator);
+		_resolver.set(this, config.propertyResolver);
 
 		_value.set(this, {});
 		_child.set(this, {});
