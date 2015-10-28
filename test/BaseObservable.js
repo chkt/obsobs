@@ -9,7 +9,7 @@ const _factType = Symbol();
 
 const _factObs = function(prop, val, target) {
 	if (typeof val === 'object' && val !== null) {
-		if (!(target instanceof Observable)) target = Observable.Type(_factType);
+		if (!(target instanceof Observable)) target = new Observable();
 
 		target[_observe.SET_PROPERTIES](val);
 
@@ -189,71 +189,22 @@ describe('moveProperties', () => {
 
 
 describe('BaseObservable', () => {
+	_observe
+		.getConfiguration(Observable)
+		.set({ factoryType : _factType });
+
+	_observe
+		.getFactoryQueue(_factType)
+		.append(_factObs);
+
+
 	describe('#constructor', () => {
 		it("should return an instance", () => {
 			const ins = new Observable();
 
 			_assert(ins instanceof Observable);
 		});
-
-		it("should only accept a generator as first arg", () => {
-			function* generate() {}
-
-			_assert.throws(() => new Observable(true), TypeError);
-			_assert.throws(() => new Observable(1), TypeError);
-			_assert.throws(() => new Observable("1"), TypeError);
-			_assert.throws(() => new Observable(null), TypeError);
-			_assert.throws(() => new Observable({}), TypeError);
-			_assert.throws(() => new Observable(() => 1), TypeError);
-			_assert.doesNotThrow(() => new Observable(generate));
-			_assert.throws(() => new Observable(Symbol()), TypeError);
-		});
-
-		it("should only accept a function as second arg", () => {
-			function* generate() {}
-			function resolve() {}
-
-			_assert.throws(() => new Observable(generate, true), TypeError);
-			_assert.throws(() => new Observable(generate, 1), TypeError);
-			_assert.throws(() => new Observable(generate, "1"), TypeError);
-			_assert.throws(() => new Observable(generate, null), TypeError);
-			_assert.throws(() => new Observable(generate, {}), TypeError);
-			_assert.doesNotThrow(() => new Observable(generate, resolve));
-			_assert.throws(() => new Observable(generate, Symbol()), TypeError);
-		});
-
-		it("should only accept a symbol as third arg", () => {
-			function* generate() {}
-			function resolve() {}
-
-			_assert.throws(() => new Observable(generate, resolve, true), TypeError);
-			_assert.throws(() => new Observable(generate, resolve, 1), TypeError);
-			_assert.throws(() => new Observable(generate, resolve, "1"), TypeError);
-			_assert.throws(() => new Observable(generate, resolve, null), TypeError);
-			_assert.throws(() => new Observable(generate, resolve, {}), TypeError);
-			_assert.throws(() => new Observable(generate, resolve, () => 1), TypeError);
-			_assert.doesNotThrow(() => new Observable(generate, resolve, Symbol()), TypeError);
-		});
 	});
-
-	describe('.Type', () => {
-		it("should return an instance", () => {
-			const ins = Observable.Type(_factType);
-
-			_assert(ins instanceof Observable);
-		});
-
-		it("should only accept a symbol as first argument", () => {
-			_assert.throws(() => Observable.Type(), TypeError);
-			_assert.throws(() => Observable.Type(true), TypeError);
-			_assert.throws(() => Observable.Type(1), TypeError);
-			_assert.throws(() => Observable.Type("1"), TypeError);
-			_assert.throws(() => Observable.Type(null), TypeError);
-			_assert.throws(() => Observable.Type({}), TypeError);
-			_assert.throws(() => Observable.Type(() => 1), TypeError);
-		});
-	});
-
 
 	describe('#[SET_PROPERTIES]', () => {
 		it("should accept an object argument", () => {
@@ -321,11 +272,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should add nested properties to the instance", () => {
-			_observe
-				.getFactoryQueue(_factType)
-				.append(_factObs);
-
-			const ins = Observable.Type(_factType);
+			const ins = new Observable();
 
 			ins[_observe.SET_PROPERTIES]({
 				a : {
@@ -342,11 +289,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should update nested properties on the instance", () => {
-			_observe
-				.getFactoryQueue(_factType)
-				.append(_factObs);
-
-			const ins = Observable.Type(_factType);
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({
@@ -369,11 +312,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should mutate properties from scalar to nested", () => {
-			_observe
-				.getFactoryQueue(_factType)
-				.append(_factObs);
-
-			const ins = Observable.Type(_factType);
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({ a : 1 });
@@ -384,11 +323,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should mutate properties from nested to scalar", () => {
-			_observe
-				.getFactoryQueue(_factType)
-				.append(_factObs);
-
-			const ins = Observable.Type(_factType);
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({ a : { a : 1 }});
@@ -398,11 +333,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should remove nested properties from the instance", () => {
-			_observe
-				.getFactoryQueue(_factType)
-				.append(_factObs);
-
-			const ins = Observable.Type(_factType);
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({
@@ -469,11 +400,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should notify when creating nested properties", done => {
-			_observe
-				.getFactoryQueue(_factType)
-				.append(_factObs);
-
-			const ins = Observable.Type(_factType);
+			const ins = new Observable();
 
 			ins[_observe.SET_PROPERTIES]({
 				a : {
@@ -493,11 +420,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should notify when updating nested properties", done => {
-			_observe
-				.getFactoryQueue(_factType)
-				.append(_factObs);
-
-			const ins = Observable.Type(_factType);
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({
@@ -524,11 +447,7 @@ describe('BaseObservable', () => {
 		});
 
 		it("should notify when removing nested properties", done => {
-			_observe
-				.getFactoryQueue(_factType)
-				.append(_factObs);
-
-			const ins = Observable.Type(_factType);
+			const ins = new Observable();
 			const set = _observe.SET_PROPERTIES;
 
 			ins[set]({
