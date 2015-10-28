@@ -1,25 +1,8 @@
 import Observable, * as _observe from './BaseObservable';
 
 
-_observe
-	.getFactoryQueue(_observe.DEFAULT_TYPE)
-	.append((prop, val) => typeof val === 'object' && val !== null ? new KeyedObservable(val) : undefined);
-
-
 
 const _notifier = new WeakMap();
-
-
-
-function* _iterate(source) {
-	if (typeof source !== 'object' || source === null) throw new TypeError();
-
-	for (let prop in source) {
-		if (!source.hasOwnProperty(prop)) continue;
-
-		yield [prop, source[prop]];
-	}
-}
 
 
 
@@ -35,13 +18,10 @@ export const RELEASE_ALL = Symbol();
 
 
 export default class KeyedObservable extends Observable {
-	constructor(source = {}, type = _observe.DEFAULT_TYPE) {
-		if (
-			typeof source !== 'object' || source === null ||
-			typeof type !== 'symbol'
-		) throw new TypeError();
+	constructor(source = {}) {
+		if (typeof source !== 'object' || source === null) throw new TypeError();
 
-		super(_observe.defaultIterator, _observe.defaultResolver, type);
+		super();
 
 		_notifier.set(this, _observe.getNotifier.call(this));
 
@@ -91,3 +71,9 @@ export default class KeyedObservable extends Observable {
 		return this;
 	}
 }
+
+
+
+_observe
+	.getFactoryQueue(_observe.DEFAULT_TYPE)
+	.append((prop, val) => typeof val === 'object' && val !== null ? new KeyedObservable(val) : undefined);
