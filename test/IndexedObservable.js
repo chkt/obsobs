@@ -1,44 +1,30 @@
 import _assert from 'assert';
 
-import Observable, * as _observe from '../source/IndexedObservable';
+import * as _observe from '../source/BaseObservable';
+import Observable from '../source/IndexedObservable';
 
 
 
 describe('IndexedObservable', () => {
 	describe('#constructor', () => {
+		_observe
+			.getConfiguration(Observable)
+			.set({ factoryType : _observe.DEFAULT_TYPE });
+
 		it("should create an instance", () => {
 			const ins = new Observable();
 
 			_assert(ins instanceof Observable);
 		});
 
-		it("should accept an Array as first arg", () => {
-			_assert.doesNotThrow(() => new Observable([]));
-		});
-
-		it("should only accept an Array as first arg", () => {
+		it("should only accept an Array as sole arg", () => {
 			_assert.throws(() => new Observable("1"), TypeError);
 			_assert.throws(() => new Observable(1), TypeError);
 			_assert.throws(() => new Observable(true), TypeError);
 			_assert.throws(() => new Observable({}), TypeError);
+			_assert.doesNotThrow(() => new Observable([]));
 			_assert.throws(() => new Observable(() => 1), TypeError);
 			_assert.throws(() => new Observable(Symbol()), TypeError);
-			_assert.throws(() => new Observable(NaN), TypeError);
-			_assert.throws(() => new Observable(null), TypeError);
-		});
-
-		it("should accept a Symbol as second arg", () => {
-			_assert.doesNotThrow(() => new Observable([], Symbol()));
-		});
-
-		it("should only accept a Symbol as second arg", () => {
-			_assert.throws(() => new Observable([], "1"), TypeError);
-			_assert.throws(() => new Observable([], 1), TypeError);
-			_assert.throws(() => new Observable([], true), TypeError);
-			_assert.throws(() => new Observable([], {}), TypeError);
-			_assert.throws(() => new Observable([], () => 1), TypeError);
-			_assert.throws(() => new Observable([], NaN), TypeError);
-			_assert.throws(() => new Observable([], null), TypeError);
 		});
 	});
 
@@ -155,6 +141,8 @@ describe('IndexedObservable', () => {
 			const ins = new Observable();
 
 			ins.append([1, 2, 3]);
+
+			console.log(ins[0]);
 
 			_assert.strictEqual(ins.length, 1);
 			_assert(ins[0] instanceof Observable);
