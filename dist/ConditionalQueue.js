@@ -29,7 +29,7 @@ var FactoryQueue = (function (_Queue) {
 
 	_createClass(FactoryQueue, [{
 		key: 'process',
-		value: function process(source, prop, val) {
+		value: function process(source, prop, val, target) {
 			if (typeof source !== 'object' || source === null || typeof prop !== 'string' || prop === '') throw new TypeError();
 
 			var _iteratorNormalCompletion = true;
@@ -40,7 +40,7 @@ var FactoryQueue = (function (_Queue) {
 				for (var _iterator = this[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
 					var fn = _step.value;
 
-					var res = fn.call(source, prop, val);
+					var res = fn.call(source, prop, val, target);
 
 					if (res !== undefined) return res;
 				}
@@ -59,7 +59,7 @@ var FactoryQueue = (function (_Queue) {
 				}
 			}
 
-			return val;
+			return null;
 		}
 	}]);
 

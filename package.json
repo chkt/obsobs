@@ -1,7 +1,7 @@
 {
 	"name": "obsobs",
 	"description" : "Nested Oberservables",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"license" : "MIT",
 
 	"author" : {
@@ -21,6 +21,11 @@
 	},
 
 	"files" : [
+		"source/ConditionalQueue.js",
+		"source/Notifier.js",
+		"source/BaseObservable.js",
+		"source/KeyedObservable.js",
+		"source/IndexedObservable.js",
 		"dist/ConditionalQueue.js",
 		"dist/Notifier.js",
 		"dist/BaseObservable.js",
