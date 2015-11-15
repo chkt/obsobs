@@ -381,10 +381,14 @@ export default class BaseObservable {
 	}
 
 
+	/**
+	 * Returns a scalar representation of the instance
+	 * @returns {Object}
+	 */
 	toJSON() {
 		const child  = _child.get(this);
 		const vals = _value.get(this)
-		const res = {};
+		const res = new (_config.get(this.constructor).scalarType);
 
 		for (let prop in vals) res[prop] = prop in child ? child[prop].toJSON() : vals[prop];
 
