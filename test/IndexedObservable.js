@@ -142,8 +142,6 @@ describe('IndexedObservable', () => {
 
 			ins.append([1, 2, 3]);
 
-			console.log(ins[0]);
-
 			_assert.strictEqual(ins.length, 1);
 			_assert(ins[0] instanceof Observable);
 			_assert.strictEqual(ins[0].length, 3);
@@ -220,6 +218,46 @@ describe('IndexedObservable', () => {
 			const ins = new Observable([1]);
 
 			_assert.strictEqual(ins.remove(0, 1), ins);
+		});
+	});
+
+	describe('#toJSON', () => {
+		it("should return an array", () => {
+			const ins = new Observable();
+
+			_assert.deepStrictEqual(ins.toJSON(), []);
+		});
+
+		it("should return original scalar model if unchanged", () => {
+			const model = [ 'a', 'b', 'c' ];
+
+			_assert.deepStrictEqual(new Observable(model).toJSON(), model);
+		});
+
+		it("should return modified scalar model if changed", () => {
+			const model = ['a', 'b', 'c'];
+
+			const ins = new Observable(model);
+
+			model[2] = 'd', ins[2] = 'd';
+
+			_assert.deepStrictEqual(ins.toJSON(), model);
+		});
+
+		it("should return original nested model if unchanged", () => {
+			const model = [[ 'a', 'b', 'c' ]];
+
+			_assert.deepStrictEqual(new Observable(model).toJSON(), model);
+		});
+
+		it("should return modified nested model if changed", () => {
+			const model = [[ 'a', 'b', 'c' ]];
+
+			const ins = new Observable(model);
+
+			model[0][2] = 'd', ins[0][2] = 'd';
+
+			_assert.deepStrictEqual(ins.toJSON(), model);
 		});
 	});
 });
