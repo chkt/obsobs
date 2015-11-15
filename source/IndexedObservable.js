@@ -143,11 +143,6 @@ export default class IndexedObservable extends Observable {
 
 		return this;
 	}
-
-
-	toJSON() {
-		return super.toJSON([]);
-	}
 }
 
 
