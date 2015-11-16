@@ -8,6 +8,12 @@ const _notifier = new WeakMap();
 
 
 
+/**
+ * The IndexedObservable iteration generator
+ * @param {Array} source - The source Array
+ * @yields [{String}, {*}]
+ * @throws {TypeError} if source is not an Array
+ */
 function* iterate(source) {
 	if (!Array.isArray(source)) throw new TypeError();
 
@@ -20,6 +26,12 @@ function* iterate(source) {
 	}
 }
 
+/**
+ * The IndexedObservable property update resolver
+ * @param {Array} now - The new property state
+ * @param {Array} was - The old property state
+ * @returns {Object}
+ */
 function resolve(now, was) {
 	const add = _ops.differenceByValue(now, was);
 	const remove = _ops.differenceByValue(was, now);
@@ -58,6 +70,11 @@ function resolve(now, was) {
 
 
 export default class IndexedObservable extends Observable {
+	/**
+	 * Creates a new instance
+	 * @param {Array} source - The source Array
+	 * @throws {TypeError} if source is not an Array
+	 */
 	constructor(source = []) {
 		if (!Array.isArray(source)) throw new TypeError();
 
@@ -70,11 +87,23 @@ export default class IndexedObservable extends Observable {
 	}
 
 
+	/**
+	 * The length
+	 * @readonly
+	 */
 	get length() {
 		return _length.get(this);
 	}
 
 
+	/**
+	 * Inserts new items at index
+	 * @param {Uint} index - The insertion index
+	 * @param {*} items - The new items
+	 * @returns {IndexedObservable}
+	 * @throws {TypeError} if index is not an Uint
+	 * @throws {RangeError} if index is out of range
+	 */
 	insert(index, ...items) {
 		if (!Number.isSafeInteger(index) || index < 0) throw new TypeError();
 
@@ -96,6 +125,11 @@ export default class IndexedObservable extends Observable {
 		return this;
 	}
 
+	/**
+	 * Appends new items
+	 * @param {*} items - The new items
+	 * @returns {IndexedObservable}
+	 */
 	append(...items) {
 		const len = _length.get(this);
 		const add = [], ilen = items.length;
@@ -109,6 +143,14 @@ export default class IndexedObservable extends Observable {
 		return this;
 	}
 
+	/**
+	 * Removes items items at index
+	 * @param {Uint} index - The removal index
+	 * @param {*} items - The removal items
+	 * @returns {IndexedObservable}
+	 * @throws {TypeError} if index is not an Uint
+	 * @throws {RangeError} if index + items.length is out of range
+	 */
 	remove(index, ...items) {
 		if (!Number.isSafeInteger(index) || index < 0) throw new TypeError();
 
@@ -132,12 +174,22 @@ export default class IndexedObservable extends Observable {
 	}
 
 
+	/**
+	 * Adds global observer cb
+	 * @param {Function} cb - The observer function
+	 * @returns {IndexedObservable}
+	 */
 	observe(cb) {
 		_notifier.get(this).addListener(cb);
 
 		return this;
 	}
 
+	/**
+	 * Removes global observer cb
+	 * @param {Function} cb - The observer function
+	 * @returns {IndexedObservable}
+	 */
 	release(cb) {
 		_notifier.get(this).removeListener(cb);
 
