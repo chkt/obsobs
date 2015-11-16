@@ -35,7 +35,7 @@ function* iterate(source) {
 function resolve(now, was) {
 	const add = _ops.differenceByValue(now, was);
 	const remove = _ops.differenceByValue(was, now);
-	const update = [], move = [];
+	const update = {}, move = {};
 
 	remove.forEach((item, index, source) => {
 		const rel = add.indexOf(item);
