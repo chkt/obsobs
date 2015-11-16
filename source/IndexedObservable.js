@@ -5,6 +5,7 @@ import * as _ops from 'obsops';
 
 const _length = new WeakMap();
 const _notifier = new WeakMap();
+const _identity = new WeakMap();
 
 
 
@@ -27,18 +28,30 @@ function* iterate(source) {
 }
 
 /**
+ * The IndexedObservable property identity operation
+ * @param {*} a - The protagonist
+ * @param {*} b - The antagonist
+ * @returns {Boolean}
+ */
+function identity(a, b) {
+	return a === b;
+}
+
+/**
  * The IndexedObservable property update resolver
  * @param {Array} now - The new property state
  * @param {Array} was - The old property state
  * @returns {Object}
  */
 function resolve(now, was) {
+	const identity = _identity.get(this);
+
 	const add = _ops.differenceByValue(now, was);
 	const remove = _ops.differenceByValue(was, now);
 	const update = {}, move = {};
 
 	remove.forEach((item, index, source) => {
-		const rel = add.indexOf(item);
+		const rel = add.findIndex((aitem, aindex, asource) => identity(item, aitem));
 
 		if (rel === index) {
 			update[index] = add[index];
@@ -48,6 +61,8 @@ function resolve(now, was) {
 		}
 		else if (rel !== -1) {
 			move[index] = rel;
+
+			if (remove[index] !== add[rel]) update[index] = add[rel];
 
 			delete add[rel];
 			delete remove[index];
@@ -82,6 +97,7 @@ export default class IndexedObservable extends Observable {
 
 		_length.set(this, 0);
 		_notifier.set(this, _observe.getNotifier.call(this));
+		_identity.set(this, _observe.getConfiguration(this.constructor).identityOperation);
 
 		if (source.length !== 0) this.append(...source);
 	}
@@ -208,5 +224,6 @@ _observe
 	.set({
 		scalarType : Array,
 		scalarIterator : iterate,
-		propertyResolver : resolve
+		propertyResolver : resolve,
+		identityOperation : identity
 	});
